@@ -1,0 +1,638 @@
+---
+title: "The fans stay loyal, the players move on"
+author: "Uwe Sterr"
+date: "July 2016"
+output: 
+  html_document: 
+    code_folding: hide
+    theme: cosmo
+    toc: yes
+    toc_depth: 4
+    toc_float: no
+---
+
+
+
+```{r, message=FALSE, warning=FALSE, comment=NA, functions, fig.width=10, results="asis", tidy=F}
+ 
+library(dplyr)
+library(purrr)
+library(tidyr)
+library(ggplot2)
+library(broom)
+library(magrittr)
+library(plotly)
+library(RSQLite)
+library(reshape2)
+library(visNetwork)
+library(networkD3)
+library(jsonlite)
+library(RColorBrewer)
+library(gplots)
+library(knitr)
+library(DT)
+library(data.table)
+library(d3heatmap)
+library(viridis)
+library(maps)
+library(ggmap)
+library(circlize)
+
+
+rm(list = ls())
+
+
+
+
+# Functions ---------------------------------------------------------------
+
+
+rsplit <- function(x) {
+  x <- x[!is.na(x[,1]),,drop=FALSE]
+  if(nrow(x)==0) return(NULL)
+  if(ncol(x)==1) return(lapply(x[,1], function(v) list(name=v)))
+  s <- split(x[,-1, drop=FALSE], x[,1])
+  unname(mapply(function(v,n) {if(!is.null(v)) list(name=n, children=v) else list(name=n)}, lapply(s, rsplit), names(s), SIMPLIFY=FALSE))
+}
+
+
+# Connect to data base ----------------------------------------------------
+con <- dbConnect(SQLite(), dbname="input/database.sqlite")
+# con <- dbConnect(SQLite(), dbname="database160721.sqlite")
+# list all tables
+# dbListTables(con)
+
+
+player       <- tbl_df(dbGetQuery(con,"SELECT * FROM player"))
+# player_stats <- tbl_df(dbGetQuery(con,"SELECT * FROM player_stats"))
+Match        <- tbl_df(dbGetQuery(con,"SELECT * FROM Match"))
+Team        <- tbl_df(dbGetQuery(con,"SELECT * FROM Team"))
+Country        <- tbl_df(dbGetQuery(con,"SELECT * FROM Country"))
+League        <- tbl_df(dbGetQuery(con,"SELECT * FROM League"))
+
+# select columns 
+
+player  <- select(player,player_api_id, player_name) # use player_api_id as key for join
+Team    <- select(Team, team_api_id, team_long_name, team_short_name) # use team_api_id as key for join
+Country <-select(Country, id, name) %>% rename(country_id = id)  %>% rename(country_name = name)   # use country_id as key for join
+League  <- select(League, country_id, name) %>% rename(league_name = name) # use country_id as key for join
+Match   <-select(Match, id, country_id, league_id, season, stage, date, match_api_id, home_team_api_id, away_team_api_id, home_team_goal, away_team_goal, home_player_1, home_player_2, home_player_3, home_player_4, home_player_5, home_player_6, home_player_7, home_player_8, home_player_9, home_player_10, home_player_11, away_player_1, away_player_2, away_player_3, away_player_4, away_player_5, away_player_6, away_player_7, away_player_8, away_player_9, away_player_10, away_player_11, goal, shoton, shotoff, foulcommit, card, cross, corner, possession)
+
+### Data structure
+# names(player)
+# names(Team)
+# names(Country)
+# names(League)
+# names(Match)
+
+
+
+# built league table in format data.table because the composite key was easier to create with data.table keycols = c("season", "league_id", "home_team_api_id" )
+
+PointsDf <-Match %>% 
+  select(1:11)  %>% 
+  mutate(homePoint = if_else((home_team_goal > away_team_goal),3,if_else((home_team_goal == away_team_goal),1,0))) %>%
+  mutate(awayPoint = if_else((home_team_goal > away_team_goal),0,if_else((home_team_goal == away_team_goal),1,3))) 
+
+tableHomeDt <- PointsDf %>% 
+  group_by(season, league_id, home_team_api_id) %>%
+  summarise(pointsHome = sum(homePoint)) %>%
+  ungroup() %>% data.table
+  
+  keycols = c("season", "league_id", "home_team_api_id" )
+setkeyv(tableHomeDt,keycols) 
+
+tableAwayDt <- PointsDf %>% 
+  group_by(season, league_id, away_team_api_id) %>%
+  summarise(pointsAway = sum(awayPoint)) %>%
+  ungroup()  %>% data.table 
+  keycols = c("season", "league_id", "away_team_api_id" )
+setkeyv(tableAwayDt,keycols) 
+
+tableHomeAwayDt <- tableHomeDt[tableAwayDt, nomatch=0] %>%
+  mutate(points = pointsHome + pointsAway) %>%
+  group_by(season, league_id)  %>%
+  mutate(rank = min_rank(desc(points)))
+
+tableLong <- tableHomeAwayDt %>% 
+  left_join(League, by = c("league_id" = "country_id")) %>%
+  left_join(Team, by = c("home_team_api_id" = "team_api_id")) %>%
+  ungroup() %>%
+  select(season, league_name, rank, team_long_name, points)
+
+# melt match data to generate df with player names in one column ----------
+
+matchMelt <-melt(Match,id = c(1:11), measure=c(12:33),na.rm = TRUE, value.name = "player_api_id") %>% 
+  mutate(team_api_id=ifelse(grepl("home",variable),home_team_api_id,
+                            ifelse(grepl("away",variable),away_team_api_id,NA))) %>%  # create team_api_id column based on variable info
+  left_join(Team, by = "team_api_id") %>%
+  left_join(player, by = "player_api_id") %>% # add club to each player
+  left_join(Country, by = "country_id") %>% # add club to each player
+  left_join(League, by = "country_id") %>% # add club to each player
+  separate(season, into=c("saisonStart","saisonEnd"),sep = "/", convert = TRUE)  # split saison so it integer
+
+TransferDf <-matchMelt %>%
+  select(player_name, team_long_name, team_short_name, saisonStart, saisonEnd, country_name, league_name)  %>%
+  group_by(player_name,team_long_name) %>%
+  arrange(saisonStart)  %>%
+  summarise(Player = first(player_name), ClubFirst = min(saisonStart),ClubLast = max(saisonEnd), Country = first(country_name), League = first(league_name)) %>%
+  arrange(ClubFirst) %>%
+  mutate(FormerClub = lag(team_long_name)) %>%
+  mutate(CurrentClub = team_long_name) %>%
+  mutate(FormerLeague = lag(League)) %>%
+  mutate(CurrentLeague = League) %>%
+  mutate(FormerCountry = lag(Country)) %>%
+  mutate(CurrentCountry = Country) %>%
+  select(Player, CurrentClub,	FormerClub,	ClubFirst,	ClubLast, CurrentLeague, FormerLeague, CurrentCountry, FormerCountry)
+
+# Visnetwork function ----------------------------------------------
+visNetworkCLubPlayerCountry  <- function(TransferDf, Country, transfereSince)
+{
+edges <- TransferDf  %>%
+  filter(CurrentCountry == Country) %>% 
+  filter(ClubFirst >= transfereSince) %>% 
+  select(c(CurrentClub,Player)) %>%
+  rename(from = CurrentClub)  %>%
+  rename(to = Player) %>%
+  sample_frac(0.5, replace = FALSE) %>%
+  ungroup()  %>% 
+  mutate(arrows = c("from"))
+
+edgesMelt <- edges %>%
+  mutate(shape = "") %>%
+  melt(id = "shape", measure = c("to", "from"), value.name = "id")
+
+nodesClub <- edgesMelt %>%
+  filter(variable == "from") %>%
+  mutate(group = c("Club"))
+
+nodesPlayer <- edgesMelt %>%
+  filter(variable == "to") %>%
+  mutate(group = Player) 
+
+nodes <- rbind(nodesClub,nodesPlayer) %>% select(c(variable,id, group)) %>% unique()  
+
+visNetwork(nodes, edges) %>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree =2), nodesIdSelection = TRUE) %>%
+  visEdges(arrows = "from") %>%
+  visInteraction(dragNodes = FALSE, dragView = FALSE, zoomView = FALSE)  %>%
+
+  visInteraction(navigationButtons = TRUE) 
+}
+
+# VisNetwork per player -------------------------
+
+#Arsenal Manchester United Barcelona Real Madrid Bayern Munich Borussia Dortmund
+
+visNetworkPerClub  <- function(matchMelt, Club, Saison)
+{
+PlayerSelected <- matchMelt  %>%
+  filter(saisonStart == Saison) %>% 
+  filter(team_long_name == Club) %>%
+  select(player_name) %>%
+  unique()
+
+
+edges <- matchMelt %>%
+  filter(saisonStart>= Saison) %>%
+  filter(player_name %in% PlayerSelected$player_name)  %>%
+  select(c(team_long_name,player_name)) %>%
+  rename(from = team_long_name)  %>%
+  rename(to = player_name) %>%
+  unique()  %>% 
+  mutate(arrows = c("from"))
+
+edgesMelt <- edges %>%
+  mutate(shape = "") %>%
+  melt(id = "shape", measure = c("to", "from"), value.name = "id")
+
+nodesClub <- edgesMelt %>%
+  filter(variable == "from") %>%
+  mutate(group = c("Club"))
+
+nodesPlayer <- edgesMelt %>%
+  filter(variable == "to") %>%
+  mutate(group = c("Player")) 
+
+nodes <- rbind(nodesClub,nodesPlayer) %>% select(c(variable,id, group)) %>% unique()  
+
+visNetwork(nodes, edges, main = list(text = paste0("Where did the player of ", Club, " play after 2012" ),
+ style = "font-family:Comic Sans MS;color:#ff0000;font-size:15px;text-align:center;")) %>%
+  visGroups( groupname = "Player", color = "lightgreen") %>%
+  visGroups( groupname = "Club", color = "lightblue") %>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree =1), nodesIdSelection = FALSE) %>%
+  visInteraction(dragNodes = FALSE, dragView = FALSE, zoomView = FALSE)  %>%
+  visGroups(groupname = "Club", shape = "icon", icon = list(code = "f1e3", size = 75)) %>%
+  visGroups(groupname = "Player", shape = "icon", icon = list(code = "f183", color = "green")) %>%
+  addFontAwesome() %>%
+  visInteraction(navigationButtons = TRUE) 
+}
+
+Saison <-2012
+#Arsenal Manchester United Barcelona Real Madrid Bayern Munich Borussia Dortmund
+
+```
+
+***  
+
+# The fans stay loyal and the players move on!
+
+
+Don't know how you feel, but when I see the players kiss their shirt and then move on to the next club I feel a little bit deluded.  
+In the following graphs the move of players through the leagues and between the clubs are shown.  
+  
+- Lets see how the leagues compare
+- How are the big teams compare?
+- How did their points evolve over time?
+- See who is cashing in by changing the clubs many times
+
+The analysis is based on a kaggle dataset  https://www.kaggle.com/hugomathien/soccer
+
+First let us look at the transfers since 2008 in a chord digram. Please note that an D3 based interactive version of chord diagrams is available in the package "chorddiag", however, this package is not available on Kaggle. Check code to see how to integrate the interactive version.
+  
+The chord diagram links the two leagues with an arc, the end of the arc scales with the number of players transferd from that country to the country on the other end of the arc. E.g. see the arc from Portugal to Spain. On the Portugal side the arc is wider than on the Spain side because more players move from Portugal to Spain than vica versa. And since the total number of transfers of the two countries is similar the width of the arc can be compared directly.
+
+
+***
+
+
+<h2 align="center">Chord diagram of transfers between leagues</h2>
+
+```{r , Chorddiag, fig.height=10, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+
+TransferMatrix <- na.omit(TransferDf)  %>% ungroup() %>% group_by(FormerLeague, CurrentLeague) %>%
+ summarise(sub = n()) %>% ungroup() %>%  na.omit()  %>%
+   mutate_each(funs(factor), FormerLeague:CurrentLeague) %>% acast(FormerLeague ~ CurrentLeague, value.var = "sub") 
+
+kaggle <- 0
+
+
+if (kaggle == 0) {
+   library(chorddiag)
+chorddiag(TransferMatrix)
+} else {
+   chordDiagram(TransferMatrix)
+circos.clear()
+}
+```
+
+***
+Lets see how the numbers look like. Italy has almost twice as much transfers as Germany, with the new TV money floating around in England I guess soon there will be an inrease in transfers to England.
+
+<h2 align="center">Number of transfers between leagues in table format</h2>
+
+```{r}
+na.omit(TransferDf)  %>% ungroup() %>% group_by(FormerLeague) %>%
+ summarise(NumberOfTransfers = n()) %>% arrange(desc(NumberOfTransfers)) %>% data.table() %>% datatable( rownames = FALSE, colnames =c("League", "Number of transfers since 2008") ,options = list(dom = 't', autoWidth = TRUE, columnDefs = list(list(width = '250px', targets = c(1)))))
+```
+
+  
+    
+     
+Italy has the highest volume on transfers, the bulk of it within the league. Surprisingly the Scottish league has the lowest number of transfers.
+
+***
+  
+<br><br>
+<h2 align="center">Number of transfers within leagues in table format</h2>
+
+```{r}
+na.omit(TransferDf)  %>% ungroup() %>% filter_("FormerLeague==CurrentLeague") %>% group_by(FormerLeague) %>%
+ summarise(NumberOfTransfers = n()) %>% arrange(desc(NumberOfTransfers)) %>% data.table() %>% datatable( rownames = FALSE, colnames =c("League", "Number of transfers within league since 2008") ,options = list(dom = 't', autoWidth = TRUE,
+  columnDefs = list(list(width = '250px', targets = c(1)))))
+```
+
+<br><br>
+
+Other than Spain and Portugal swapping place the same pattern is seen in the in-league transfers.
+
+***  
+
+<br><br>
+
+
+## Where did players of the season  `r Saison` play since then?  {.tabset .tabset-fade .tabset-pills}
+
+**Zoom and select nodes to get more insight, navigate with the tabs to the club your are most interested in.**  
+The arrowhead indicates that the player played for that team
+
+1. Top tabs let you choose the league
+1. Second row tabs let you choose teams within the selected league
+
++ Check out Rafael from ManU, he played for 5 teams.
++ Guess how many players went from playing for Real to SSC Napoli?  
+  
+  
+
+### English league
+
+*** 
+
+####  {.tabset .tabset-fade .tabset-pills}
+
+
+##### ManU
+***
+```{r , VisNetworkManu, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Manchester United"
+visNetworkPerClub(matchMelt, Club, Saison)
+
+```
+
+
+
+##### Arsenal
+***
+```{r , VisNetworkArsenal, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Arsenal"
+visNetworkPerClub(matchMelt, Club, Saison)
+```
+
+### German league
+
+***
+
+#### {.tabset .tabset-fade .tabset-pills}
+
+##### Bayern
+***
+```{r , VisNetworkBayern, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Bayern Munich"
+visNetworkPerClub(matchMelt, Club, Saison)
+```
+
+##### Dortmund
+***
+
+```{r , VisNetworkDort, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Borussia Dortmund"
+visNetworkPerClub(matchMelt, Club, Saison)
+```
+
+
+##### VFB Stuttgart 
+***
+
+```{r , VisNetworkStuggi, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "VfB Stuttgart"
+visNetworkPerClub(matchMelt, Club, Saison)
+```
+
+
+
+### Spanish league
+
+***
+
+#### {.tabset .tabset-fade .tabset-pills}
+
+##### Real
+***
+```{r , VisNetworkReal, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Real Madrid"
+visNetworkPerClub(matchMelt, Club, Saison)
+```
+
+##### Barca
+***
+
+```{r , VisNetworkBarca, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Barcelona"
+visNetworkPerClub(matchMelt, Club, Saison)
+```
+
+That was intersting, but how much are certain clubs tied together over the years?
+
+***  
+<br><br>
+
+## Club links with more than 3 transferes between clubs since `r Saison`
+**Hover over edges to find the number of transfers betweeen the clubs, hover over the nodes to see the league of the club**
+
+**Incredible**, 10 players went from Fiorentina to Hannover, god, Hannover must be wonderful to life in compared to Florence...
+  
+- Check out your favorit team by using the **select list input control**
+- Zoom in to make labels readable
+- Click on nodes to see how the are connected
+***
+  
+
+<h2 align="center">Network of club transfers, zoom in for details</h2>
+```{r , ClubTransfere, fig.width= 11, fig.height=8,  warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+
+# filter values
+transfereSince <- 2012
+minTransfers <- 3
+
+edges <-matchMelt %>%
+  select(player_name, team_long_name, saisonStart, saisonEnd, country_id, league_name)  %>%
+  group_by(player_name,team_long_name) %>%
+  summarise(Player = first(player_name), FirstForClub = min(saisonStart),LastForClub = max(saisonEnd), Country = first(country_id), League = first(league_name)) %>%
+  filter(LastForClub >= transfereSince) %>%
+  mutate(OldClub = lag(team_long_name))  %>%
+  mutate(CountryFrom = lag(Country))   %>%  # not correct
+  mutate(CountryTo = Country) %>%
+  na.omit() %>%
+  rename(to = team_long_name)  %>%
+  rename(from = OldClub) %>%
+  summarise(value = n_distinct(c(from,to)),to = first(to), from = first(from) , colorTo = first(CountryTo),
+            colorFrom = last(CountryFrom), League = first(League))  %>%
+  select(to, from, value, colorTo, colorFrom, League) %>%
+  filter(value > minTransfers)  %>%
+  mutate( title = paste("#Trans = ", value, " since: ", transfereSince)) %>%
+  unique() 
+
+
+nodes <- data.frame(c(edges$to,edges$from)) %>% unique() # create node dataframe
+names(nodes)[1]<-"idNode"
+ # add league id to nodes to determine color of nodes according to league
+
+nodes <- inner_join(nodes, matchMelt, c("idNode" = "team_long_name")) %>%
+  select(idNode, league_name) %>% unique() %>% rename(title = league_name)
+# add color accoring to league
+League <- League %>% mutate(color = mypalette<-brewer.pal(11,"Paired"))
+nodes <- left_join(nodes, League, c("title" = "league_name")) %>% rename(id = idNode)
+nodes <- select(nodes, id, color, title)  %>% arrange(id)
+
+#  https://cran.r-project.org/web/packages/visNetwork/vignettes/Introduction-to-visNetwork.html  
+
+
+visNetwork(nodes, edges) %>%
+  visGroups( groupname = "OldClub", color = "lightgreen") %>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree =1), nodesIdSelection = TRUE) %>%
+  visEdges(arrows = "to") %>%
+  visInteraction(dragNodes = FALSE, dragView = FALSE, zoomView = FALSE)  %>%
+  visLegend() %>%
+  visInteraction(navigationButtons = TRUE)  %>%
+  visPhysics(stabilization = TRUE, maxVelocity = 10) 
+```
+
+***  
+
+<br><br>
+
+## How did it work out for the teams, all tables of all leagues since 2008/2009
+
+Just type in search field **"england 2008/2009"** to get premiere league table of season 2008/2009, or **"bundes 2011/2012"** for German Bundesliga of season 2011/2012 and sort for "Rank". BTW, the table considers **only points**, not goal difference, gives at times a better feeling about how close the whole thing often is, especially at the bottom of the table.
+
+***
+<h3 align="center">Interactive table to show league tables of selected leagues and season</h3>
+```{r , League1, fig.width=15 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+datatable(tableLong, rownames = FALSE, colnames =c("Season", "League", "Rank", "Team", "Points"),options = list(
+  order = list(list(2, 'asc')), pageLength = 25, search = list(search = 'england 2015/2016')))
+
+```
+
+***  
+
+<br><br>
+
+## Heatmaps of Clubs in Leagues, how many points did they have at the end of the season
+Points express better than ranking the strength of a team. After all, ranking is relative, one season the team can be champion with 80 points, next season its only worth 3rd place.
+
+
+```{r, fig.height = 10, fig.width = 10}
+
+tableLong$points <- as.factor(tableLong$points)
+p <- ggplot(filter(tableLong, league_name %in% c("Germany 1. Bundesliga", "England Premier League" )), mapping = aes(x = season, y = team_long_name)) + 
+  geom_tile(mapping = aes(fill = points),color="white", size=0.1 ) + facet_grid(league_name~., scales = "free_y") +scale_fill_viridis(discrete=TRUE) + theme(legend.position = "none")  # free y scale to avoid that all clubs are on Y axis in all leagues
+ggplotly(p)
+```
+
+
+
+
+```{r , ClubTransfereRadial, fig.width= 10, fig.height=10,  warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+
+TransferRadialCLubs <- function(TransferDf, Club, Saison)
+{
+TransferRadialLeagues  <- TransferDf %>%
+    filter(grepl(Club , FormerClub )) %>%
+  filter(ClubFirst >= Saison) %>%
+    as.list() %>% as.data.frame(stringsAsFactors = FALSE) %>%
+   select(FormerClub, CurrentCountry, CurrentClub, Player) %>%
+  arrange(FormerClub, CurrentCountry, CurrentClub, Player) 
+
+TransferRadialList <- rsplit(TransferRadialLeagues)[[1]]
+radialNetwork(TransferRadialList, fontSize = 20, height = 700, width = 1000, linkColour = "green", nodeColour = "green", nodeStroke = "lightgreen", textColour = "blue" )  
+}
+```
+
+***  
+
+<br><br>
+
+# Where did players play since  `r Saison` , this time in a radial network just for fun
+
+
+## ManU  
+
+***  
+
+```{r , VisNetworkRadialManu,fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Manchester United"
+TransferRadialCLubs(TransferDf, Club, Saison)
+```
+
+***
+
+## Arsenal  
+
+```{r , VisNetworkRadialArsenal, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Arsenal"
+TransferRadialCLubs(TransferDf, Club, Saison)
+```
+
+***
+## Bayern  
+
+```{r , VisNetworkRadialBayern, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Bayern Munich"
+TransferRadialCLubs(TransferDf, Club, Saison)
+```
+
+***
+## Dortmund  
+
+
+```{r , VisNetworkRadialDort, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Borussia Dortmund"
+TransferRadialCLubs(TransferDf, Club, Saison)
+```
+
+***
+
+## VFB Stuttgart   
+
+
+```{r , VisNetworkRadialStuggi, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "VfB Stuttgart"
+TransferRadialCLubs(TransferDf, Club, Saison)
+```
+
+***
+
+## Real  
+
+```{r , VisNetworkRadialReal, fig.width=10 ,warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+Club <- "Real Madrid"
+TransferRadialCLubs(TransferDf, Club, Saison)
+```
+
+***
+## Barca  
+
+
+```{r, echo=FALSE, fig.height=5, fig.width=5, message=FALSE, warning=FALSE, comment=NA, results="asis", tidy=F, VisNetworkRadialBarca}
+Club <- "Barcelona"
+TransferRadialCLubs(TransferDf, Club, Saison)
+```
+
+***
+
+<br><br>
+
+# Check Transfer dataframe with some players
+Always good to check if the data is generated correctly.  
+Note, the transfers were determined by the date the player played for the club, therefore there is a slight discrepancy.
+
+**Lewandowski**  
+2006–2008	Znicz Pruszków   
+2008–2010	Lech Poznań  
+2010–2014	Borussia Dortmund	  
+2014–	Bayern Munich
+
+**Rene Adler**  
+2006–2012	Bayer Leverkusen    
+2012–	Hamburger SV  
+
+```{r , CheckTransferDf, warning=FALSE, message=FALSE,comment = NA, results = "asis", comment = NA, tidy = F}
+
+# check with Lewandowski
+
+
+ TransferDf %>% filter(grepl("Robert Lewandowski" ,Player )) %>% select(-Player)  %>% kable()
+
+ TransferDf %>% filter(grepl("Adler" ,Player ))  %>% select(-Player)  %>% kable()
+
+ 
+```
+
+# Infos
+
+1. datatable format https://rstudio.github.io/DT/options.html
+1. map with clubs and links https://cran.r-project.org/web/packages/rworldmap/vignettes/rworldmap.pdf
+2. Heatmap plot by value using ggmap  http://stackoverflow.com/questions/32148564/heatmap-plot-by-value-using-ggmap
+3. Drawing Arcs on Maps 
+ 3.1 with theory http://dsgeek.com/2013/06/08/DrawingArcsonMaps.html
+ 3.2 ready to use http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/
+4. chord diagram https://github.com/mattflor/chorddiag, doesnt run on kaggle server
+5. use circlize instead 
+
+# to does
+
+1. create gif animation of radials to show in markdown doc
+
+
+
+

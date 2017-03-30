@@ -1,0 +1,68 @@
+---
+title: "The fans stay devoted, the player move on"
+author: "Uwe Sterr"
+date: "July 2016"
+runtime: shiny
+output: 
+  html_document: 
+    theme: readable
+    code_folding: hide
+    toc: yes
+    toc_depth: 4
+    toc_float: no
+---
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars,  echo=FALSE}
+load("modelsFile.RData")
+library(gapminder)
+library(dplyr)
+library(purrr)
+library(tidyr)
+library(ggplot2)
+library(broom)
+library(purrr)
+library(magrittr)
+library(plotly)
+
+                             sliderInput(inputId = "rsqSliderValue",
+                                         label = "R^2",
+                                         value = c(0,0.25), min = 0, max = 1, dragRange = TRUE, step = 0.25)
+                     
+                           
+selectInput('countrySelect', 'Country', as.character(unlist(c(models[, "country"]))),selected = "Germany")
+selectInput('xcol', 'X Variable', names(unnest(models,data)), selected = "year")
+selectInput('ycol', 'Y Variable', names(unnest(models,data)), selected = "pop")
+
+
+renderPlotly(
+    
+    models %>% filter((rsq < input$rsqSliderValue[2] & rsq > input$rsqSliderValue[1]))  %>% unnest(rsq)  %>% top_n(10,rsq) %>% unnest(data) %>% ggplot(aes(year, lifeExp)) +
+      geom_line(aes( colour = continent))  +
+      facet_wrap(~country))
+    
+    renderPlotly(
+    
+    models %>% filter(country == input$countrySelect)  %>% unnest (data) %>% ggplot(aes(x=get(input$xcol), y=get(input$ycol))) + geom_line()  )
+  
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE, cache=TRUE}
+library(plotly)
+
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

@@ -1,0 +1,636 @@
+---
+title: "R Kenntnisse VHS 2017/1"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 4
+  html_notebook: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+
+# Data visualisation
+```{r}
+library(tidyverse)
+tidyverse_packages()  # which packages are in tidyverse
+```
+
+## Where can I find useful packages?
+
+- CRAN task list  https://cran.r-project.org
+- r-bloggers search http://www.r-bloggers.com 
+
+## Where can I find how to use packages
+
+- Reference manual on CRAN
+- Vignettes
+- ?
+- Demos
+
+
+
+
+```{r}
+# List vignettes from all *attached* packages
+vignette(all = FALSE)
+# List vignettes from all *installed* packages (can take a long time!):
+vignette(all = TRUE)
+# find vignettes of "ggplot2"
+vignette(package = "ggplot2")
+# view vignette "ggplot2-specs"  
+vignette("ggplot2-specs")
+```
+
+
+now look for more information on ggplot
+
+```{r}
+?ggplot2
+demo()          # find demos for attached packages
+demo(graphics)  # A show of some of R's graphics capabilities, run in console
+
+```
+
+
+## lets look at the some data
+
+note that the pipe can be run in parts (short cut Ctrl+Shift+M, CMD+SHIFT+M )
+
+```{r}
+mpg  %>% select(displ, cty, hwy, year)  %>% plot()
+
+plot(select(mpg,displ,cty,hwy,year))
+```
+
+
+
+## Creating a ggplot
+
+ggplot is part of the tidyverse and a widely used package to work with graphics 
+**note** for ggplot there is "+" to combine commands, in contrast to "% > %" which is the pipe operator for commands outside ggplot
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+
+## Create a ggplot with color = class
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+```
+
+## Create a ggplot with size = class
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, size = class))
+```
+
+## Create a ggplot with alpha = class
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
+```
+
+## Create a ggplot with shape = class
+
+**note** there are only 6 different shapes, therefore "suv" has no shape and is not displayed
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+```
+
+
+
+## Create plot where property of geom is set manually
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+## Recap
+- Where would you check for packages?
+- Where would you look on how to use packages?
+- When would you use size as function of a value in a plot?
+
+
+# Facets
+If there is a variable value which separates data it can be used to create multiple plots rather than multiple lines in one plot.
+
+## facet_wrap
+facet_wrap wraps a 1d sequence of panels into 2d
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow = 2)
+```
+
+
+## facet_grid
+facet_grid forms a matrix of panels defined by row and column facetting variables.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_grid(drv ~ cyl)
+```
+
+
+
+# Geometic objects
+different ways to present the same data
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) 
+```
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv, color = drv))
+```
+
+### avoid the legend
+
+
+```{r}
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy, group = drv))
+```
+
+
+## display several geoms in same plot
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+
+## don't repeat code 
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth()
+```
+
+
+## use only subset of data for geom
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
+```
+
+
+## lost in all the options?
+CHEATSHEETS are at your fingertips under HELP menu of RStudio IDE or
+https://www.rstudio.com/resources/cheatsheets/ 
+
+
+# Statistical transformations
+
+## bar plot for discrete x-data
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut))
+```
+
+## box plot for discrete x- and continuous y-data
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_boxplot(mapping = aes(x = cut, y = price))
+```
+
+
+## Violin plot for discrete x- and continuous y-data
+gives good impression of distribution
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_violin(mapping = aes(x = cut, y = price, color = cut))
+```
+
+## Histogram
+A histogram is a graphical representation of the distribution of numerical data.
+
+https://de.wikipedia.org/wiki/Histogramm
+
+```{r}
+ggplot(diamonds, aes(carat)) +
+  geom_histogram()
+# set binwidth
+ggplot(diamonds, aes(carat)) +
+  geom_histogram(binwidth = 0.01)
+# set number of bins
+ggplot(diamonds, aes(carat)) +
+  geom_histogram(bins = 200)
+```
+
+## use geom_freqpoly for easier comparison
+
+```{r}
+# Rather than stacking histograms, it's easier to compare frequency
+# polygons
+ggplot(diamonds, aes(price, fill = cut)) +
+  geom_histogram(binwidth = 500)
+ggplot(diamonds, aes(price, colour = cut)) +
+  geom_freqpoly(binwidth = 500)
+```
+
+
+work with densities, means each curve has area of one
+
+```{r}
+# To make it easier to compare distributions with very different counts,
+# put density on the y axis instead of the default count
+ggplot(diamonds, aes(price, ..density.., colour = cut)) +
+  geom_freqpoly(binwidth = 500)
+```
+
+## Empirical Cumulative Distribution Function (ECDF)
+
+The empirical distribution function estimates the cumulative distribution function underlying of the points in the sample and converges with probability 1
+
+https://de.wikipedia.org/wiki/Empirische_Verteilungsfunktion
+
+
+```{r}
+df <- data.frame(x = rnorm(10000))
+ggplot(df, aes(x)) +
+  geom_histogram()
+ggplot(df, aes(x)) + stat_ecdf(geom = "step")
+
+p  <- ggplot(df, aes(x)) + stat_ecdf()
+pg <- ggplot_build(p)$data[[1]]
+ggplot(pg, aes(x = x, y = 1-y )) + geom_step() + scale_y_log10() 
+
+
+
+```
+
+
+## Recap
+
+- Which geom seems useful for you?
+- Can you think of a use case for a facet plot?
+
+one more source for information https://www.rdocumentation.org
+
+#  Data wrangling
+
+```{r}
+library(nycflights13)
+flights
+```
+
+
+## filter rows
+
+filter all rows where month == 1 and day ==1, multiple filter conditions are separated by ","
+
+```{r}
+filter(flights, month == 1, day == 1)
+```
+
+
+## store all x-mas flights
+
+note, if you wrap the expression in () then the result will be displayed even when the result is assigned to a variable
+
+```{r}
+(xmas_flights <- filter(flights, month == 12, day == 24))
+```
+
+
+## boolean operators work as well
+
+```{r}
+filter(flights, month == 11 | month == 12)
+```
+
+
+the following expressions give the same result
+
+
+```{r}
+filter(flights, !(arr_delay > 120 | dep_delay > 120))
+filter(flights, arr_delay <= 120, dep_delay <= 120)
+```
+
+
+## Arrange rows with arrange()
+
+
+```{r}
+arrange(flights, year, month, day)
+```
+
+## select columns with select()
+also an easy way to bring columns in a specific order
+
+```{r}
+select(flights, year, month, day)
+```
+select all but a range of columns
+
+```{r}
+select(flights, -(year:day))
+```
+
+more can be found in the cheatsheet 
+
+## Add new variables with mutate()
+
+note the %>% operator
+
+```{r}
+select(flights, 
+  year:day, 
+  ends_with("delay"), 
+  distance, 
+  air_time) %>% 
+mutate(
+  gain = arr_delay - dep_delay,
+  speed = distance / air_time * 60,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours) %>% 
+  select(-c(month, day, speed))
+```
+
+if you only want to keep the new columns use "transmute()"
+
+```{r}
+select(flights, 
+  year:day, 
+  ends_with("delay"), 
+  distance, 
+  air_time) %>% 
+transmute(
+  gain = arr_delay - dep_delay,
+  speed = distance / air_time * 60,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours) 
+```
+
+
+## Grouped summaries with summarise()
+
+the mean of all depature delays
+
+```{r}
+summarise(flights, delay = mean(dep_delay, na.rm = TRUE))
+
+# na.rm	a logical value indicating whether NA values should be stripped before the computation proceeds.
+
+```
+
+
+
+```{r}
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay = mean(dep_delay, na.rm = TRUE))
+```
+
+find pattern of delays during the year
+
+```{r}
+by_day <- flights %>% group_by(year, month)
+summarise(by_day, delay = mean(dep_delay, na.rm = TRUE)) %>% ggplot(aes( x = month, y = delay, group = month)) +
+  geom_col()
+```
+
+
+
+## Find planes with high delays
+
+```{r}
+not_cancelled <- flights %>% 
+  filter(!is.na(arr_delay))
+
+not_cancelled %>% 
+  group_by(tailnum) %>% 
+  summarise(
+    delay = mean(arr_delay)
+  ) %>%
+ggplot( mapping = aes(x = delay)) + 
+  geom_freqpoly(binwidth = 10)
+```
+
+there seems a few planes with very high mean delay. Lets look closer into the issue
+
+```{r}
+delays <- not_cancelled %>% 
+  group_by(tailnum) %>% 
+  summarise(
+    delay = mean(arr_delay, na.rm = TRUE),
+    n = n()
+  )
+
+ggplot(data = delays, mapping = aes(x = n, y = delay)) + 
+  geom_point(alpha = 1/10)
+```
+
+
+the high delays are for tailnum wiht limited number of flight.
+Lets choose only tailnums where at least 25 flights are recorded
+
+```{r}
+delays %>% 
+  filter(n > 25) %>% 
+  ggplot(mapping = aes(x = n, y = delay)) + 
+    geom_point(alpha = 1/10)
+```
+
+what if we want to select the points under consideration not via a limit but from a plot? Use **Shiny Gadgets**
+
+```{r}
+library(shiny)
+library(miniUI)
+
+ggbrush <- function(data, xvar, yvar) {
+  
+  ui <- miniPage(
+    gadgetTitleBar("Drag to select points"),
+    miniContentPanel(
+      # The brush="brush" argument means we can listen for
+      # brush events on the plot using input$brush.
+      plotOutput("plot", height = "100%", brush = "brush")
+    )
+  )
+  
+  server <- function(input, output, session) {
+    
+    # Render the plot
+    output$plot <- renderPlot({
+      # Plot the data with x/y vars indicated by the caller.
+      ggplot(data, aes_string(xvar, yvar)) + geom_point()
+    })
+    
+    # Handle the Done button being pressed.
+    observeEvent(input$done, {
+      # Return the brushed points. See ?shiny::brushedPoints.
+      stopApp(brushedPoints(data, input$brush, allRows = TRUE))
+    })
+  }
+  
+  runGadget(ui, server)
+}
+# pick_points(mtcars, ~wt, ~mpg)
+brushed_points <- ggbrush(delays, "n", "delay")
+
+brushed_points   %>% ggplot(mapping = aes(x = n, y = delay, color = selected_)) + 
+    geom_point(alpha = 1/10)
+
+brushed_points   %>% filter(selected_ ==TRUE)  %>%  ggplot(mapping = aes(x = n, y = delay, color = selected_)) + 
+    geom_point(alpha = 1/3)
+
+```
+
+
+
+## now a few more things we need for the EuropeLeagueTransfers.Rmd
+
+### left_join
+
+the data set nycflights13 has four tibbles (dataframes)
+
+- airlines
+- airports
+- planes
+- weather
+
+
+```{r}
+ airlines
+ airports
+ planes
+ weather
+```
+
+
+## find the links between the data.frames
+
+
+```{r}
+library(visNetwork)
+# this function creates a data.frame with the name of the data.frame and the names of the columns of that data.frame
+create_df_of_names = function(df, name){
+  data.frame(from = name, to = names(df))
+}
+
+# create a names list of the data.frames
+a <- list(flights = flights,airlines = airlines, airports = airports, weather = weather,
+          planes = planes) 
+# and map them to build one data.frame with two columns
+# - from contains all  data.frame names
+# - to  contains all column names
+edge <- map2_df(a,names(a), create_df_of_names)
+
+# create a visNetwork
+
+nodesFrom <-  edge %>% cbind(unlist(.$from),"Table") %>% select(3,4) %>% data.frame  
+nodesTo <-  edge %>% cbind(unlist(.$to),"Attribute") %>% select(3,4) %>% data.frame 
+
+names(nodesFrom) <- c("id", "group")
+names(nodesTo) <- c("id", "group")
+
+nodes <- rbind(nodesFrom,nodesTo) %>% unique() 
+nodes$id <- as.character((nodes$id))  
+nodes <- nodes %>% unique() %>% arrange(id)
+visNetwork(nodes, edge)%>%
+  visOptions(highlightNearest = list(enabled = TRUE, degree = 2), nodesIdSelection = TRUE) %>%
+  visEdges(arrows = "to") %>%  
+  visGroups(groupname = "Table",     shape = "icon", icon = list(code = "f114", color = "green",size = 75)) %>%
+  visGroups(groupname = "Attribute", shape = "icon", icon = list(code = "f115", color = "lightgreen", size = 45)) %>%
+  addFontAwesome() 
+# list of icons http://astronautweb.co/snippet/font-awesome/
+
+```
+
+## lets find out which manufacturer has the highest delays
+
+first we need to join flights with planes
+
+```{r}
+flight_planes <- left_join(flights, planes, by = "tailnum")
+
+flight_planes %>% group_by(manufacturer) %>% summarise(delay_per_flight = sum(arr_delay, na.rm = TRUE)/ n(),number_of_flights = n()) %>% arrange(desc(delay_per_flight))
+
+```
+
+## lets find out which airline has the highest delays
+first we need to join flights with planes
+
+```{r}
+flight_airlines <- left_join(flights, airlines)
+
+flight_airlines %>% group_by(name) %>% summarise(delay_per_flight = sum(arr_delay, na.rm = TRUE)/ n(),number_of_flights = n()) %>% arrange(desc(delay_per_flight))
+
+```
+
+
+
+## long and wide data.frames
+
+for some operations the tidy wide format is not suitable as input to an operation, then a "long" version of the data.frame can be generated using the "melt" command.
+A further example will be shown in **EuropeLeagueTransfers.Rmd** and further information on the topic can be found at http://seananderson.ca/2013/10/19/reshape.html 
+
+```{r}
+library(reshape2)
+names(airquality) <- tolower(names(airquality))
+aqm <- melt(airquality, id=c("month", "day"),
+  variable.name = "climate_variable", 
+  value.name = "climate_value")
+airquality
+aqm
+```
+
+
+```{r}
+(acast_result <- acast(aqm, day ~ month ~ climate_variable, na.rm = TRUE))
+acast(aqm, month ~ climate_variable, mean, na.rm = TRUE)
+acast_result
+acast_result[22,5,]  # arrays are accessed 
+```
+
+
+## last thing we need for EuropeLeagueTransfers.Rmd
+
+grepl returns a logic vector given an expression
+
+```{r}
+letters
+grep("[a-c]", letters)
+grep("[a-z]", letters)
+grepl("[a-c]", letters)
+grepl("[a-z]", letters)
+
+```
+
+
+# Lets dive into some code
+
+**EuropeLeagueTransfers.Rmd**
