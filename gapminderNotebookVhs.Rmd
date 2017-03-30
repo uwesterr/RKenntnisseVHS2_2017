@@ -1,0 +1,227 @@
+---
+title: "Gapminder for VHS 1/2017"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 4
+  html_notebook: default
+---
+
+# Finding AIDS impact in r square
+Inspired by 
+
+- TED talk of  **Hans Rosling**: Let my dataset change your mindset
+https://www.ted.com/talks/hans_rosling_at_state#t-1176407
+
+- **Hadley Wickham** Managing many models with R https://www.youtube.com/watch?v=rz3_FDVt9eg 
+
+**R-squared** is a statistical measure of how close the data are to the fitted regression line
+
+## Topics covered
+
+- modelling
+- some aspects of purrr
+
+
+```{r}
+# VHS course "R"Kenntnisse um Wissen aus Daten zu gewinnen 2017
+
+library(gapminder)
+library(tidyverse)
+library(plotly)
+tidyverse_packages()
+```
+
+
+
+ 
+ 
+```{r}
+
+```
+
+ 
+ Lets see what is in the data
+ 
+```{r}
+summary(gapminder)
+gapminder %>% filter(gdpPercap < 300)
+# Print xy plot -----------------------------------------------------------
+
+
+gapminder <- gapminder %>% mutate(year1950 = year -1950)
+ggplot(gapminder, aes(x=year, y=lifeExp)) +geom_line(aes(group = country))
+
+```
+
+
+lets transform the data so that we keep all of a country's data in one row
+
+```{r}
+
+# Nested data -------------------------------------------------------------
+
+by_country <- gapminder  %>%
+  group_by(continent, country) %>%
+  nest()
+
+by_country                  # show content of df
+str(by_country[1:3,])       # show structure of first 3 rows of grouped and nested df
+by_country$data[[1]]        # show data of first row
+by_country$data[1]          # show data of first row
+by_country$data[[1]][[2]]   # show  contents of second column 
+by_country$data[[1]][2]     # show second column
+```
+
+
+- [ returns a list
+- [[ returns content of list
+
+a good explanation can be found at: http://r4ds.had.co.nz/vectors.html#lists 
+
+## structure of dataframe
+
+The column **data** is a list of data frames. Therefore, we have now a row per country and all data of that country in a dataframe in **one** column.
+
+In a grouped dataframe **each row is an oberservation**, in a nested dataframe **each row is a group**, in this case, a group of a country’s observations.
+
+
+
+
+## Lets build a model for each country lifeExp dependend on year
+
+
+```{r}
+
+# Fit models --------------------------------------------------------------
+
+country_model <- function(df){
+  lm(lifeExp  ~  year1950, data=df)  # use year1950 because the absolute value is not important
+}
+models <- by_country %>%
+  mutate(
+    model = map(data, country_model)
+  )
+models
+lm(lifeExp  ~  year1950, data=by_country$data[[1]]) 
+models$model[1]
+
+```
+
+## Use pipe operator to combine all together
+
+```{r}
+
+# Put it all together -----------------------------------------------------
+
+by_country <- gapminder  %>%
+  group_by(continent, country) %>%
+  nest() %>%  
+  mutate(
+    model = map(data, country_model)
+  )
+
+by_country
+```
+
+
+
+## Get the model data in a tidy form using the **broom** package
+
+```{r}
+models <- models %>%
+  mutate(
+    glance  = map(model, broom::glance),        # Construct a single row summary "glance" of a model
+    rsq     = glance %>% map_dbl("r.squared"),  # note the pipe within mutate(...)
+    tidy    = map(model, broom::tidy),          # Tidy the result of a test into a summary data.frame
+    augment = map(model, broom::augment)
+  )
+models
+models$glance[1]
+models$rsq[1]
+models$tidy[1]
+models$augment[1]
+```
+
+## lets have a look how well the model fits
+
+
+```{r}
+
+models %>% 
+  ggplot(aes(rsq, country)) +
+  geom_point(aes(colour = continent)) 
+# source("gapminderShiny.R")
+```
+
+is the plot clear? how could it be improved?
+
+
+
+ggplot orders categorical variables alphabetically 
+
+```{r}
+
+models %>% 
+  ggplot(aes(rsq, reorder(country, rsq))) +
+  geom_point(aes(colour = continent)) 
+
+```
+
+## find the countries which fit is the worst
+
+
+```{r}
+
+  models %>% filter((rsq<0.1 & rsq>0))  %>% unnest(rsq)  %>% top_n(6,rsq) %>% unnest(data) %>% 
+    ggplot(aes(year, lifeExp)) +
+    geom_line(aes( alpha = 1/3))  +
+    facet_wrap(~country)
+  
+```
+
+```{r}
+
+# Unnest data -------------------------------------------------------------
+
+unnest(models, data)
+unnest(models, glance, .drop = TRUE) 
+unnest(models, tidy)
+
+# Plot data frame ---------------------------------------------------------
+
+
+plotLife <- models %>%
+  unnest(tidy) %>%
+  select(continent, country, term, estimate, rsq) %>%
+  spread(term, estimate) %>%
+  ggplot(aes(`(Intercept)`,year1950))+
+  geom_point(aes(colour = continent, size = rsq, fill = country)) +
+  geom_smooth(se=FALSE) +
+  xlab("Life expectancy (1950)") +
+  ylab("Yearly improvement") +
+  scale_size_area() + guides(fill=FALSE)
+ggplotly(plotLife, tooltip = c("year1950", "country"))
+
+
+
+```
+
+
+```{r}
+
+unnest(models, augment)
+
+models %>% unnest(augment) %>% 
+  ggplot(aes(year1950, .resid)) +
+  geom_line(aes(group = country), alpha = 1/3) +
+  geom_smooth(se = FALSE) +
+  geom_hline(yintercept = 0, colour = "white") +
+  facet_wrap(~continent)
+
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).

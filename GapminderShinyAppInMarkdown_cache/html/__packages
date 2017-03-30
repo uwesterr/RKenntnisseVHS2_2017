@@ -1,0 +1,10 @@
+base
+shiny
+gapminder
+dplyr
+purrr
+tidyr
+ggplot2
+broom
+magrittr
+plotly
