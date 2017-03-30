@@ -16,6 +16,7 @@ linkedScatter <- function(input, output, session, data, left, right) {
   dataWithSelection <- reactive({
     # returns df with extra column "selected_"
     brushedPoints(data(), input$brush, allRows = TRUE) 
+
   })
   
   output$plot1 <- renderPlot({

@@ -205,7 +205,7 @@ ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
 
 
 ## lost in all the options?
-CHEATSHEETS are at your fingertips under HELP menu of RStudio IDE or
+CHEAT SHEETS are at your fingertips under HELP menu of RStudio IDE or
 https://www.rstudio.com/resources/cheatsheets/ 
 
 
