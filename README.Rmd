@@ -1,0 +1,14 @@
+---
+title: "Habits"
+author: John Doe
+date: March 22, 2005
+output:
+  md_document:
+    variant: markdown_github
+---
+---
+# Das Dokument beschreibt den Inhalt des VHS Kurses 
+
+[image1]: RKenntnisse.png "Boxes around heatmap hot spots"
+
+![alt text][image1]
