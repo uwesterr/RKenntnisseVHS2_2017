@@ -10,7 +10,7 @@ output:
 # Finding AIDS impact in r square
 
 Finding information in data using statistical characteristics 
-#**R-squared** is a statistical measure of how close the data are to the fitted regression line
+**R-squared** is a statistical measure of how close the data are to the fitted regression line
 
 **Inspired by **
 
@@ -23,7 +23,6 @@ https://www.ted.com/talks/hans_rosling_at_state#t-1176407
 
 
 ```{r}
-# VHS course "R"Kenntnisse um Wissen aus Daten zu gewinnen 2017
 
 library(gapminder)
 library(tidyverse)
@@ -32,7 +31,7 @@ tidyverse_packages()
 ```
 
 ## Peek into data
-### PLot data
+### Plot data
  
 ```{r}
 summary(gapminder)
