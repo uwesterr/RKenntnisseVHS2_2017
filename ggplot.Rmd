@@ -79,28 +79,28 @@ ggplot(data = mpg) +
 ```
 
 
-## Create a ggplot with color = class
+### Create a ggplot with color = class
 
 ```{r}
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy, color = class))
 ```
 
-## Create a ggplot with size = class
+### Create a ggplot with size = class
 
 ```{r}
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy, size = class))
 ```
 
-## Create a ggplot with alpha = class
+### Create a ggplot with alpha = class
 
 ```{r}
 ggplot(data = mpg) + 
   geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
 ```
 
-## Create a ggplot with shape = class
+### Create a ggplot with shape = class
 
 **note** there are only 6 different shapes, therefore "suv" has no shape and is not displayed
 
@@ -111,7 +111,7 @@ ggplot(data = mpg) +
 
 
 
-## Create plot where property of geom is set manually
+### Create plot where property of geom is set manually
 
 ```{r}
 ggplot(data = mpg) + 
@@ -124,10 +124,10 @@ ggplot(data = mpg) +
 - When would you use size as function of a value in a plot?
 
 
-# Facets
+## Facets
 If there is a variable value which separates data it can be used to create multiple plots rather than multiple lines in one plot.
 
-## facet_wrap
+### facet_wrap
 facet_wrap wraps a 1d sequence of panels into 2d
 
 ```{r}
@@ -137,7 +137,7 @@ ggplot(data = mpg) +
 ```
 
 
-## facet_grid
+### facet_grid
 facet_grid forms a matrix of panels defined by row and column facetting variables.
 
 ```{r}
@@ -148,7 +148,7 @@ ggplot(data = mpg) +
 
 
 
-# Geometic objects
+## Geometic objects
 different ways to present the same data
 
 ```{r}
@@ -177,7 +177,7 @@ ggplot(data = mpg) +
 ```
 
 
-## display several geoms in same plot
+### display several geoms in same plot
 
 ```{r}
 ggplot(data = mpg) + 
@@ -186,7 +186,7 @@ ggplot(data = mpg) +
 ```
 
 
-## don't repeat code 
+### don't repeat code 
 
 ```{r}
 ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
@@ -195,27 +195,34 @@ ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
 ```
 
 
-## use only subset of data for geom
+### use only subset of data for geom
 
 ```{r}
 ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
-  geom_point(mapping = aes(color = class)) + 
+geom_point(mapping = aes(color = class)) + 
   geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
 ```
 
 
-## lost in all the options?
-CHEAT SHEETS are at your fingertips under HELP menu of RStudio IDE or
-https://www.rstudio.com/resources/cheatsheets/ 
-
-
-# Statistical transformations
-
-## bar plot for discrete x-data
+### bar plot for discrete x-data
 ```{r}
 ggplot(data = diamonds) + 
   geom_bar(mapping = aes(x = cut))
 ```
+
+
+
+### lost in all the options?
+- CHEAT SHEETS are at your fingertips under HELP menu of RStudio IDE or
+https://www.rstudio.com/resources/cheatsheets/ 
+
+
+- stackoverflow is a vivid community 
+http://stackoverflow.com 
+
+- RDocumentation searches CRAN, BioConductor and Github packages https://www.rdocumentation.org
+
+# Statistical transformations
 
 ## box plot for discrete x- and continuous y-data
 
@@ -291,13 +298,48 @@ ggplot(pg, aes(x = x, y = 1-y )) + geom_step() + scale_y_log10()
 
 ```
 
+## Find correlations
+In statistics relationship between two variables.
+
+```{r}
+library(corrplot)
+cor_iris <- cor(iris %>% select(-Species))
+corrplot.mixed(cor_iris)
+
+```
+
+further details on the corrplot package can be found in the vignette
+
+```{r}
+vignette("corrplot-intro")
+```
+
+## Maximal Information Coefficient (MIC)
+
+In statistics, the maximal information coefficient (MIC) is a measure of the strength of the linear or **non-linear** association between two variables X and Y.
+
+```{r}
+
+library(minerva)
+compare_mic_r = function(x, y){
+cat( "MIC:", mine(x,y)$MIC, ";", "correlation: ", cor(x,y), "\n")  
+}
+x <- runif(n=1000, min=0, max=1)
+y2 <- 4*(x-0.5)^2; plot(sort(x),y2[order(x)],type="l"); compare_mic_r(x,y2)
+y3 <- sin(6*pi*x*(1+x)); plot(sort(x),y3[order(x)],type="l"); compare_mic_r(x,y3)
+t <- seq(from=0,to=2*pi,length.out=1000)
+x4 <- cos(t); y4 <- sin(t); plot(x4, y4, type="l",asp=1); compare_mic_r(x4,y4)
+
+```
+
+
 
 ## Recap
 
 - Which geom seems useful for you?
-- Can you think of a use case for a facet plot?
+- Any idea where could use facet plots for one of your tasks?
+- What do you think about correlation and maximum information coefficient?
 
-one more source for information https://www.rdocumentation.org
 
 #  Data wrangling
 
@@ -405,6 +447,8 @@ summarise(flights, delay = mean(dep_delay, na.rm = TRUE))
 
 # na.rm	a logical value indicating whether NA values should be stripped before the computation proceeds.
 
+summarise(flights, delay = mean(dep_delay, na.rm = TRUE)) %>% as.numeric()
+
 ```
 
 
@@ -511,9 +555,9 @@ brushed_points   %>% filter(selected_ ==TRUE)  %>%  ggplot(mapping = aes(x = n, 
 
 
 
-## now a few more things we need for the EuropeLeagueTransfers.Rmd
+# Now a few more things we need for the EuropeLeagueTransfers.Rmd
 
-### left_join
+## left_join
 
 the data set nycflights13 has four tibbles (dataframes)
 
@@ -596,6 +640,8 @@ flight_airlines %>% group_by(name) %>% summarise(delay_per_flight = sum(arr_dela
 ## long and wide data.frames
 
 for some operations the tidy wide format is not suitable as input to an operation, then a "long" version of the data.frame can be generated using the "melt" command.
+
+
 A further example will be shown in **EuropeLeagueTransfers.Rmd** and further information on the topic can be found at http://seananderson.ca/2013/10/19/reshape.html 
 
 ```{r}
@@ -604,22 +650,24 @@ names(airquality) <- tolower(names(airquality))
 aqm <- melt(airquality, id=c("month", "day"),
   variable.name = "climate_variable", 
   value.name = "climate_value")
-airquality
-aqm
+head(airquality)
+head(aqm)
+tail(aqm)
+
 ```
 
+Cast functions cast (deutsch: gießen) a molten data frame into an array or data frame.
+is the reverse function of melt and will be used in **EuropeLeagueTransfers.Rmd**
 
 ```{r}
-(acast_result <- acast(aqm, day ~ month ~ climate_variable, na.rm = TRUE))
-acast(aqm, month ~ climate_variable, mean, na.rm = TRUE)
-acast_result
-acast_result[22,5,]  # arrays are accessed 
+aqw <- dcast(aqm, month + day ~ climate_variable)
+head(aqw) 
 ```
 
 
 ## last thing we need for EuropeLeagueTransfers.Rmd
 
-grepl returns a logic vector given an expression
+**grepl** returns a logic vector given an expression
 
 ```{r}
 letters

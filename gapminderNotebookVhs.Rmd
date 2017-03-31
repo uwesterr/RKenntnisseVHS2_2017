@@ -8,19 +8,18 @@ output:
 ---
 
 # Finding AIDS impact in r square
-Inspired by 
+
+Finding information in data using statistical characteristics 
+#**R-squared** is a statistical measure of how close the data are to the fitted regression line
+
+**Inspired by **
 
 - TED talk of  **Hans Rosling**: Let my dataset change your mindset
 https://www.ted.com/talks/hans_rosling_at_state#t-1176407
 
 - **Hadley Wickham** Managing many models with R https://www.youtube.com/watch?v=rz3_FDVt9eg 
 
-**R-squared** is a statistical measure of how close the data are to the fitted regression line
 
-## Topics covered
-
-- modelling
-- some aspects of purrr
 
 
 ```{r}
@@ -32,8 +31,8 @@ library(plotly)
 tidyverse_packages()
 ```
 
-
- Lets see what is in the data
+## Peek into data
+### PLot data
  
 ```{r}
 summary(gapminder)
@@ -46,8 +45,11 @@ ggplot(gapminder, aes(x=year, y=lifeExp)) +geom_line(aes(group = country))
 
 ```
 
-
+### Data wrangling
 lets transform the data so that we keep all of a country's data in one row
+
+- build nested data.frame
+- access elements of nested data.frame
 
 ```{r}
 
@@ -71,7 +73,7 @@ by_country$data[[1]][2]     # show second column
 
 a good explanation can be found at: http://r4ds.had.co.nz/vectors.html#lists 
 
-## structure of dataframe
+### structure of dataframe
 
 The column **data** is a list of data frames. Therefore, we have now a row per country and all data of that country in a dataframe in **one** column.
 
@@ -79,8 +81,8 @@ In a grouped dataframe **each row is an oberservation**, in a nested dataframe *
 
 
 
-
-## Lets build a model for each country lifeExp dependend on year
+## Build a model
+Lets build a model for each country, lifeExp ~  year
 
 
 ```{r}
@@ -100,7 +102,7 @@ models$model[1]
 
 ```
 
-## Use pipe operator to combine all together
+### Combine data wrangling and modell building
 
 ```{r}
 
@@ -135,7 +137,7 @@ models$tidy[1]
 models$augment[1]
 ```
 
-## lets have a look how well the model fits
+### Investigate how well the model fits 
 
 
 ```{r}
@@ -160,7 +162,7 @@ models %>%
 
 ```
 
-## find the countries which fit is the worst
+### Find the countries with the worst fit
 
 
 ```{r}
@@ -172,7 +174,7 @@ models %>%
   
 ```
 
-## how much did the countries improve life expectancy over time
+# How much did the countries improve life expectancy over time
 
 
 ```{r}

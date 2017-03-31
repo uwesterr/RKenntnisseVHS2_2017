@@ -94,6 +94,8 @@ PointsDf <-Match %>%
   mutate(homePoint = if_else((home_team_goal > away_team_goal),3,if_else((home_team_goal == away_team_goal),1,0))) %>%
   mutate(awayPoint = if_else((home_team_goal > away_team_goal),0,if_else((home_team_goal == away_team_goal),1,3))) 
 
+# Create home and way tables which will be combined to calculate total points
+
 tableHomeDt <- PointsDf %>% 
   group_by(season, league_id, home_team_api_id) %>%
   summarise(pointsHome = sum(homePoint)) %>%
@@ -109,6 +111,7 @@ tableAwayDt <- PointsDf %>%
   keycols = c("season", "league_id", "away_team_api_id" )
 setkeyv(tableAwayDt,keycols) 
 
+# combine the two tables and create ranking
 tableHomeAwayDt <- tableHomeDt[tableAwayDt, nomatch=0] %>%
   mutate(points = pointsHome + pointsAway) %>%
   group_by(season, league_id)  %>%
@@ -121,10 +124,9 @@ tableLong <- tableHomeAwayDt %>%
   select(season, league_name, rank, team_long_name, points)
 
 # melt match data to generate df with player names in one column ----------
-
 matchMelt <-melt(Match,id = c(1:11), measure=c(12:33),na.rm = TRUE, value.name = "player_api_id") %>% 
   mutate(team_api_id=ifelse(grepl("home",variable),home_team_api_id,
-                            ifelse(grepl("away",variable),away_team_api_id,NA))) %>%  # create team_api_id column based on variable info
+                            ifelse(grepl("away",variable),away_team_api_id,NA))) %>%  # get longer names by joining appropriate data.frames
   left_join(Team, by = "team_api_id") %>%
   left_join(player, by = "player_api_id") %>% # add club to each player
   left_join(Country, by = "country_id") %>% # add club to each player
@@ -133,9 +135,10 @@ matchMelt <-melt(Match,id = c(1:11), measure=c(12:33),na.rm = TRUE, value.name =
 
 TransferDf <-matchMelt %>%
   select(player_name, team_long_name, team_short_name, saisonStart, saisonEnd, country_name, league_name)  %>%
-  group_by(player_name,team_long_name) %>%
-  arrange(saisonStart)  %>%
+  group_by(player_name,team_long_name) %>% # now we have all players with their team
+  arrange(saisonStart)  %>% 
   summarise(Player = first(player_name), ClubFirst = min(saisonStart),ClubLast = max(saisonEnd), Country = first(country_name), League = first(league_name)) %>%
+# now players first and last game for a club is found
   arrange(ClubFirst) %>%
   mutate(FormerClub = lag(team_long_name)) %>%
   mutate(CurrentClub = team_long_name) %>%
@@ -144,41 +147,6 @@ TransferDf <-matchMelt %>%
   mutate(FormerCountry = lag(Country)) %>%
   mutate(CurrentCountry = Country) %>%
   select(Player, CurrentClub,	FormerClub,	ClubFirst,	ClubLast, CurrentLeague, FormerLeague, CurrentCountry, FormerCountry)
-
-# Visnetwork function ----------------------------------------------
-visNetworkCLubPlayerCountry  <- function(TransferDf, Country, transfereSince)
-{
-edges <- TransferDf  %>%
-  filter(CurrentCountry == Country) %>% 
-  filter(ClubFirst >= transfereSince) %>% 
-  select(c(CurrentClub,Player)) %>%
-  rename(from = CurrentClub)  %>%
-  rename(to = Player) %>%
-  sample_frac(0.5, replace = FALSE) %>%
-  ungroup()  %>% 
-  mutate(arrows = c("from"))
-
-edgesMelt <- edges %>%
-  mutate(shape = "") %>%
-  melt(id = "shape", measure = c("to", "from"), value.name = "id")
-
-nodesClub <- edgesMelt %>%
-  filter(variable == "from") %>%
-  mutate(group = c("Club"))
-
-nodesPlayer <- edgesMelt %>%
-  filter(variable == "to") %>%
-  mutate(group = Player) 
-
-nodes <- rbind(nodesClub,nodesPlayer) %>% select(c(variable,id, group)) %>% unique()  
-
-visNetwork(nodes, edges) %>%
-  visOptions(highlightNearest = list(enabled = TRUE, degree =2), nodesIdSelection = TRUE) %>%
-  visEdges(arrows = "from") %>%
-  visInteraction(dragNodes = FALSE, dragView = FALSE, zoomView = FALSE)  %>%
-
-  visInteraction(navigationButtons = TRUE) 
-}
 
 # VisNetwork per player -------------------------
 
@@ -262,7 +230,7 @@ The chord diagram links the two leagues with an arc, the end of the arc scales w
 
 TransferMatrix <- na.omit(TransferDf)  %>% ungroup() %>% group_by(FormerLeague, CurrentLeague) %>%
  summarise(sub = n()) %>% ungroup() %>%  na.omit()  %>%
-   mutate_each(funs(factor), FormerLeague:CurrentLeague) %>% acast(FormerLeague ~ CurrentLeague, value.var = "sub") 
+   mutate_each(funs(factor), FormerLeague:CurrentLeague) %>% acast(FormerLeague ~ CurrentLeague, value.var = "sub") # now matrix with leagues on both dimensions
 
 kaggle <- 0
 
@@ -283,7 +251,8 @@ Lets see how the numbers look like. Italy has almost twice as much transfers as 
 
 ```{r}
 na.omit(TransferDf)  %>% ungroup() %>% group_by(FormerLeague) %>%
- summarise(NumberOfTransfers = n()) %>% arrange(desc(NumberOfTransfers)) %>% data.table() %>% datatable( rownames = FALSE, colnames =c("League", "Number of transfers since 2008") ,options = list(dom = 't', autoWidth = TRUE, columnDefs = list(list(width = '250px', targets = c(1)))))
+ summarise(NumberOfTransfers = n()) %>% arrange(desc(NumberOfTransfers))  %>% 
+  datatable( rownames = FALSE, colnames =c("League", "Number of transfers since 2008") ,options = list(dom = 't', autoWidth = TRUE, columnDefs = list(list(width = '250px', targets = c(1)))))
 ```
 
   
@@ -297,8 +266,10 @@ Italy has the highest volume on transfers, the bulk of it within the league. Sur
 <h2 align="center">Number of transfers within leagues in table format</h2>
 
 ```{r}
-na.omit(TransferDf)  %>% ungroup() %>% filter_("FormerLeague==CurrentLeague") %>% group_by(FormerLeague) %>%
- summarise(NumberOfTransfers = n()) %>% arrange(desc(NumberOfTransfers)) %>% data.table() %>% datatable( rownames = FALSE, colnames =c("League", "Number of transfers within league since 2008") ,options = list(dom = 't', autoWidth = TRUE,
+# note "filter_" expects as second argument a logical predicates becuase this time we don't test content of column but if two column have equal content.
+na.omit(TransferDf)  %>% ungroup() %>% filter_("FormerLeague==CurrentLeague") %>% group_by(FormerLeague) %>% summarise(NumberOfTransfers = n()) %>% arrange(desc(NumberOfTransfers))  %>% 
+  
+  datatable( rownames = FALSE, colnames =c("League", "Number of transfers within league since 2008") ,options = list(dom = 't', autoWidth = TRUE,
   columnDefs = list(list(width = '250px', targets = c(1)))))
 ```
 
