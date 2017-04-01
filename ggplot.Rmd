@@ -1,5 +1,5 @@
 ---
-title: "R Kenntnisse VHS 2017/1"
+title: "R Kenntnisse VHS 1_2017"
 output:
   html_document:
     toc: yes
@@ -20,7 +20,7 @@ tidyverse_packages()  # which packages are in tidyverse
 
 ## Where can I find useful packages?
 
-- CRAN task list  https://cran.r-project.org
+- CRAN "task views"  https://cran.r-project.org
 - r-bloggers search http://www.r-bloggers.com 
 
 ## Where can I find how to use packages
@@ -29,8 +29,6 @@ tidyverse_packages()  # which packages are in tidyverse
 - Vignettes
 - ?
 - Demos
-
-
 
 
 ```{r}
@@ -61,7 +59,7 @@ note that the pipe can be run in parts (short cut Ctrl+Shift+M, CMD+SHIFT+M )
 
 ```{r}
 mpg  %>% select(displ, cty, hwy, year)  %>% plot()
-
+# compare this to the "nested" version 
 plot(select(mpg,displ,cty,hwy,year))
 ```
 
@@ -69,7 +67,7 @@ plot(select(mpg,displ,cty,hwy,year))
 
 ## Creating a ggplot
 
-ggplot is part of the tidyverse and a widely used package to work with graphics 
+"ggplot" is part of the "tidyverse" and a widely used package to work with graphics 
 **note** for ggplot there is "+" to combine commands, in contrast to "% > %" which is the pipe operator for commands outside ggplot
 
 
@@ -86,11 +84,11 @@ ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy, color = class))
 ```
 
-### Create a ggplot with size = class
+### Create a ggplot with size = cty
 
 ```{r}
 ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy, size = class))
+  geom_point(mapping = aes(x = displ, y = hwy, size = cty))
 ```
 
 ### Create a ggplot with alpha = class
@@ -121,7 +119,7 @@ ggplot(data = mpg) +
 ## Recap
 - Where would you check for packages?
 - Where would you look on how to use packages?
-- When would you use size as function of a value in a plot?
+- When would you use size as function of a variable in a plot?
 
 
 ## Facets
@@ -147,6 +145,22 @@ ggplot(data = mpg) +
 ```
 
 
+#### Now get your hands dirty on size, color, shape, alpha
+
+Analyse available data set in ggplot2! The data sets are listed and explained @ http://docs.ggplot2.org
+
+Use
+- size
+- color
+- alpha
+- shape
+
+to emphasise you message
+
+
+```{r}
+ggplot(midwest, aes(x= area, y = poptotal, color = percchildbelowpovert)) + geom_point() + facet_wrap(~ state, nrow = 3) + scale_y_log10() + scale_x_log10()
+```
 
 ## Geometic objects
 different ways to present the same data
@@ -162,7 +176,8 @@ ggplot(data = mpg) +
   geom_smooth(mapping = aes(x = displ, y = hwy))
 ```
 
-
+### geom_smooth with more than one line
+draw a different line, with a different linetype, for each unique value of the variable that you map to linetype
 ```{r}
 ggplot(data = mpg) + 
   geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv, color = drv))
@@ -221,6 +236,7 @@ https://www.rstudio.com/resources/cheatsheets/
 http://stackoverflow.com 
 
 - RDocumentation searches CRAN, BioConductor and Github packages https://www.rdocumentation.org
+
 
 # Statistical transformations
 
@@ -339,6 +355,30 @@ x4 <- cos(t); y4 <- sin(t); plot(x4, y4, type="l",asp=1); compare_mic_r(x4,y4)
 - Which geom seems useful for you?
 - Any idea where could use facet plots for one of your tasks?
 - What do you think about correlation and maximum information coefficient?
+
+
+#### Now get your hands dirty on: facets, geom_ ...
+
+Explore a data set even further use
+
+use 
+
+- facets
+- different geoms_
+  - geom_bar
+  - geom_boxplot
+  - geom_histogram
+  - geom_freqpoly
+  - stat_ecdf
+- correlation
+- MIC
+
+need help?
+
+- cheat sheets
+- docs of ggplot
+- http://docs.ggplot2.org
+
 
 
 #  Data wrangling
@@ -554,6 +594,16 @@ brushed_points   %>% filter(selected_ ==TRUE)  %>%  ggplot(mapping = aes(x = n, 
 ```
 
 
+#### Now get your hands dirty on select, summarise, mutate...
+
+now wrangle you data to analyse it use
+
+- summerise
+- mutate
+- select
+- group_by
+- filter
+
 
 # Now a few more things we need for the EuropeLeagueTransfers.Rmd
 
@@ -586,12 +636,11 @@ create_df_of_names = function(df, name){
 }
 
 # create a names list of the data.frames
-a <- list(flights = flights,airlines = airlines, airports = airports, weather = weather,
-          planes = planes) 
+list_of_df <- list(flights = flights,airlines = airlines, airports = airports, weather = weather, planes = planes) 
 # and map them to build one data.frame with two columns
 # - from contains all  data.frame names
 # - to  contains all column names
-edge <- map2_df(a,names(a), create_df_of_names)
+edge <- map2_df(list_of_df,names(list_of_df), create_df_of_names)
 
 # create a visNetwork
 

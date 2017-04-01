@@ -1,7 +1,7 @@
 library(shiny)
 library(ggplot2)
 
-linkedScatterUI <- function(id) {
+linkedScatterUI <- function(id) { # define the linkedScatterUI as item with two plots in a fluidRow
   ns <- NS(id)
   
   fluidRow(
@@ -11,7 +11,7 @@ linkedScatterUI <- function(id) {
 }
 
 linkedScatter <- function(input, output, session, data, left, right) {
-  # Yields the data frame with an additional column "selected_"
+  # Yields the data frame "dataWithSelection" with an additional column "selected_"
   # that indicates whether that observation is brushed
   dataWithSelection <- reactive({
     # returns df with extra column "selected_"
