@@ -2,20 +2,29 @@
 title: "The fans stay loyal, the players move on"
 author: "Uwe Sterr"
 date: "July 2016"
-output: 
-  html_document: 
+output:
+  html_document:
     code_folding: hide
+    collapsed: no
+    css: style.css
     highlight: tango
-    theme: cosmo
+    theme: readable
     toc: yes
     toc_depth: 4
-    toc_float: no
+    toc_float: yes
+  html_notebook:
+    code_folding: hide
+    collapsed: no
+    css: style.css
+    highlight: tango
+    theme: readable
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
 ---
 
-
-
 ```{r, message=FALSE, warning=FALSE, comment=NA, functions, fig.width=10, results="asis", tidy=F}
- 
+
 library(dplyr)
 library(purrr)
 library(tidyr)
@@ -39,11 +48,8 @@ library(maps)
 library(ggmap)
 library(circlize)
 
-
 rm(list = ls())
-
-
-
+Saison <-2012
 
 # Functions ---------------------------------------------------------------
 
@@ -63,7 +69,6 @@ con <- dbConnect(SQLite(), dbname="input/database.sqlite")
 # list all tables
 # dbListTables(con)
 
-
 player       <- tbl_df(dbGetQuery(con,"SELECT * FROM player"))
 # player_stats <- tbl_df(dbGetQuery(con,"SELECT * FROM player_stats"))
 Match        <- tbl_df(dbGetQuery(con,"SELECT * FROM Match"))
@@ -71,7 +76,53 @@ Team        <- tbl_df(dbGetQuery(con,"SELECT * FROM Team"))
 Country        <- tbl_df(dbGetQuery(con,"SELECT * FROM Country"))
 League        <- tbl_df(dbGetQuery(con,"SELECT * FROM League"))
 
-# select columns 
+```
+
+## Find connections between different tables
+```{r, message=FALSE, warning=FALSE, comment=NA, fig.width=10, results="asis", tidy=F}
+
+library(visNetwork)
+  # this function creates a data.frame with the name of the data.frame and the names of the columns of that data.frame
+  create_df_of_names = function(df, name){
+    data.frame(from = name, to = names(df))
+  }
+      list_of_df <- list(player = player,Match = Match, Team = Team, Country = Country, League = League) 
+
+  create_vis_network <- function(list_of_df) {
+    # create a names list of the data.frames
+    # and map them to build one data.frame with two columns
+    # - from contains all  data.frame names
+    # - to  contains all column names
+    edge <- map2_df(list_of_df,names(list_of_df), create_df_of_names)
+    
+    # create a visNetwork
+    
+    nodesFrom <-  edge %>% cbind(unlist(.$from),"Table") %>% select(3,4) %>% data.frame  
+    nodesTo <-  edge %>% cbind(unlist(.$to),"Attribute") %>% select(3,4) %>% data.frame 
+    
+    names(nodesFrom) <- c("id", "group")
+    names(nodesTo) <- c("id", "group")
+    
+    nodes <- rbind(nodesFrom,nodesTo) %>% unique() 
+    nodes$id <- as.character((nodes$id))  
+    nodes <- nodes %>% unique() %>% arrange(id)
+    visNetwork(nodes, edge)%>%
+      visOptions(highlightNearest = list(enabled = TRUE, degree = 2), nodesIdSelection = TRUE) %>%
+      visEdges(arrows = "to") %>%  
+      visGroups(groupname = "Table",     shape = "icon", icon = list(code = "f114", color = "green",size = 75)) %>%
+      visGroups(groupname = "Attribute", shape = "icon", icon = list(code = "f115", color = "lightgreen", size = 45)) %>%
+      addFontAwesome() 
+    # list of icons http://astronautweb.co/snippet/font-awesome/
+  }
+  
+  create_vis_network(list_of_df)
+
+```
+
+
+## Select relevant columns
+
+```{r}
 
 player  <- select(player,player_api_id, player_name) # use player_api_id as key for join
 Team    <- select(Team, team_api_id, team_long_name, team_short_name) # use team_api_id as key for join
@@ -79,16 +130,33 @@ Country <-select(Country, id, name) %>% rename(country_id = id)  %>% rename(coun
 League  <- select(League, country_id, name) %>% rename(league_name = name) # use country_id as key for join
 Match   <-select(Match, id, country_id, league_id, season, stage, date, match_api_id, home_team_api_id, away_team_api_id, home_team_goal, away_team_goal, home_player_1, home_player_2, home_player_3, home_player_4, home_player_5, home_player_6, home_player_7, home_player_8, home_player_9, home_player_10, home_player_11, away_player_1, away_player_2, away_player_3, away_player_4, away_player_5, away_player_6, away_player_7, away_player_8, away_player_9, away_player_10, away_player_11, goal, shoton, shotoff, foulcommit, card, cross, corner, possession)
 
-### Data structure
-# names(player)
-# names(Team)
-# names(Country)
-# names(League)
-# names(Match)
+
+```
+
+## Join the tables so that all information is available from matchMelt
+
+```{r}
+# melt match data to generate df with player names in one column ----------
+matchMelt <-melt(Match,id = c(1:11), measure=c(12:33),na.rm = TRUE, value.name = "player_api_id") %>% 
+  mutate(team_api_id=ifelse(grepl("home",variable),home_team_api_id,
+                            ifelse(grepl("away",variable),away_team_api_id,NA))) %>%  # get longer names by joining appropriate data.frames
+  left_join(Team, by = "team_api_id") %>%
+  left_join(player, by = "player_api_id") %>% # add club to each player
+  left_join(Country, by = "country_id") %>% # add club to each player
+  left_join(League, by = "country_id") %>% # add club to each player
+  separate(season, into=c("saisonStart","saisonEnd"),sep = "/", convert = TRUE)  # split saison so it integer
+      list_of_df <- list(player = player,matchMelt = matchMelt, Team = Team, Country = Country, League = League) 
+  create_vis_network(list_of_df)
+```
 
 
 
-# built league table in format data.table because the composite key was easier to create with data.table keycols = c("season", "league_id", "home_team_api_id" )
+## Built league table in format data.table because the composite key was easier to create with data.table keycols = c("season", "league_id", "home_team_api_id" )
+
+
+```{r}
+
+
 
 PointsDf <-Match %>% 
   select(1:11)  %>% 
@@ -124,15 +192,13 @@ tableLong <- tableHomeAwayDt %>%
   ungroup() %>%
   select(season, league_name, rank, team_long_name, points)
 
-# melt match data to generate df with player names in one column ----------
-matchMelt <-melt(Match,id = c(1:11), measure=c(12:33),na.rm = TRUE, value.name = "player_api_id") %>% 
-  mutate(team_api_id=ifelse(grepl("home",variable),home_team_api_id,
-                            ifelse(grepl("away",variable),away_team_api_id,NA))) %>%  # get longer names by joining appropriate data.frames
-  left_join(Team, by = "team_api_id") %>%
-  left_join(player, by = "player_api_id") %>% # add club to each player
-  left_join(Country, by = "country_id") %>% # add club to each player
-  left_join(League, by = "country_id") %>% # add club to each player
-  separate(season, into=c("saisonStart","saisonEnd"),sep = "/", convert = TRUE)  # split saison so it integer
+
+
+```
+
+## Create Transfer data.frame
+
+```{r}
 
 TransferDf <-matchMelt %>%
   select(player_name, team_long_name, team_short_name, saisonStart, saisonEnd, country_name, league_name)  %>%
@@ -149,9 +215,14 @@ TransferDf <-matchMelt %>%
   mutate(CurrentCountry = Country) %>%
   select(Player, CurrentClub,	FormerClub,	ClubFirst,	ClubLast, CurrentLeague, FormerLeague, CurrentCountry, FormerCountry)
 
-# VisNetwork per player -------------------------
 
-#Arsenal Manchester United Barcelona Real Madrid Bayern Munich Borussia Dortmund
+
+
+```
+
+## Define function for VisNetwork used later
+
+```{r}
 
 visNetworkPerClub  <- function(matchMelt, Club, Saison)
 {
@@ -197,8 +268,8 @@ visNetwork(nodes, edges, main = list(text = paste0("Where did the player of ", C
   visInteraction(navigationButtons = TRUE) 
 }
 
-Saison <-2012
-#Arsenal Manchester United Barcelona Real Madrid Bayern Munich Borussia Dortmund
+# Set variable for VisNetwork, when to look at where players go afterwards
+
 
 ```
 

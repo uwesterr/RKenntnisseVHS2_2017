@@ -1,15 +1,24 @@
 ---
 title: "Gapminder for VHS 1/2017"
+author: "Uwe Sterr"
+date: "April 2017"
 output:
-  html_document:
-    theme: readable
-    highlight: tango
+  html_notebook:
+    collapsed: no
     css: style.css
+    highlight: tango
+    theme: readable
     toc: yes
     toc_depth: 4
-    toc_float: true
-    collapsed: false
-html_notebook: default
+    toc_float: yes
+  html_document:
+    collapsed: no
+    css: style.css
+    highlight: tango
+    theme: readable
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
 ---
 
 # Finding AIDS impact in r square

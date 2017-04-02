@@ -1,16 +1,26 @@
 ---
 title: "R Kenntnisse VHS 1_2017"
+author: "Uwe Sterr"
+date: "April 2017"
 output:
   html_document:
-    theme: readable
-    highlight: tango
+    collapsed: no
     css: style.css
+    highlight: tango
+    theme: readable
     toc: yes
     toc_depth: 4
-    toc_float: true
-    collapsed: false
+    toc_float: yes
+  html_notebook:
+    collapsed: no
+    css: style.css
+    highlight: tango
+    theme: readable
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
 ---
-
+ 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
@@ -63,8 +73,9 @@ demo(graphics)  # A show of some of R's graphics capabilities, run in console
 note that the pipe can be run in parts (short cut Ctrl+Shift+M, CMD+SHIFT+M )
 
 ```{r}
+View(mpg)
 mpg  %>% select(displ, cty, hwy, year)  %>% plot()
-# compare this to the "nested" version 
+# compare this to the "nested" version of the command sequence
 plot(select(mpg,displ,cty,hwy,year))
 ```
 
@@ -73,7 +84,7 @@ plot(select(mpg,displ,cty,hwy,year))
 ## Creating a ggplot
 
 "ggplot" is part of the "tidyverse" and a widely used package to work with graphics 
-**note** for ggplot there is "+" to combine commands, in contrast to "% > %" which is the pipe operator for commands outside ggplot
+**note** for ggplot there is **"+"** to combine commands, in contrast to **"% > %"** which is the pipe operator for commands outside ggplot
 
 
 ```{r}
@@ -90,6 +101,8 @@ ggplot(data = mpg) +
 ```
 
 ### Create a ggplot with size = cty
+
+plot the size depending to miles per gallon in the city, lower values and therefore smaller points are better
 
 ```{r}
 ggplot(data = mpg) + 
@@ -266,6 +279,8 @@ A histogram is a graphical representation of the distribution of numerical data.
 
 https://de.wikipedia.org/wiki/Histogramm
 
+$n=\sum _{i=1}^{k}{m_{i}}$
+
 ```{r}
 ggplot(diamonds, aes(carat)) +
   geom_histogram()
@@ -300,7 +315,8 @@ ggplot(diamonds, aes(price, ..density.., colour = cut)) +
 
 ## Empirical Cumulative Distribution Function (ECDF)
 
-The empirical distribution function estimates the cumulative distribution function underlying of the points in the sample and converges with probability 1
+The empirical distribution function estimates the cumulative distribution function underlying of the points in the sample and converges with probability 1.  
+$F_{X}(x)= {P} (X\leq x)$
 
 https://de.wikipedia.org/wiki/Empirische_Verteilungsfunktion
 
@@ -311,16 +327,23 @@ ggplot(df, aes(x)) +
   geom_histogram()
 ggplot(df, aes(x)) + stat_ecdf(geom = "step")
 
+
+```
+###  Complementary Cumulative Distribution Function (CCDF)
+
+$\bar{F}(x)={P} (X>x)=1-F(x)$
+```{r}
+
 p  <- ggplot(df, aes(x)) + stat_ecdf()
 pg <- ggplot_build(p)$data[[1]]
 ggplot(pg, aes(x = x, y = 1-y )) + geom_step() + scale_y_log10() 
-
-
 
 ```
 
 ## Find correlations
 In statistics relationship between two variables.
+
+$\rho _{X,Y}=\mathrm {corr} (X,Y)={\mathrm {cov} (X,Y) \over \sigma _{X}\sigma _{Y}}={E[(X-\mu _{X})(Y-\mu _{Y})] \over \sigma _{X}\sigma _{Y}}$
 
 ```{r}
 library(corrplot)
@@ -637,37 +660,37 @@ the data set nycflights13 has four tibbles (dataframes)
 
 
 ```{r}
-library(visNetwork)
-# this function creates a data.frame with the name of the data.frame and the names of the columns of that data.frame
-create_df_of_names = function(df, name){
-  data.frame(from = name, to = names(df))
-}
-
-# create a names list of the data.frames
-list_of_df <- list(flights = flights,airlines = airlines, airports = airports, weather = weather, planes = planes) 
-# and map them to build one data.frame with two columns
-# - from contains all  data.frame names
-# - to  contains all column names
-edge <- map2_df(list_of_df,names(list_of_df), create_df_of_names)
-
-# create a visNetwork
-
-nodesFrom <-  edge %>% cbind(unlist(.$from),"Table") %>% select(3,4) %>% data.frame  
-nodesTo <-  edge %>% cbind(unlist(.$to),"Attribute") %>% select(3,4) %>% data.frame 
-
-names(nodesFrom) <- c("id", "group")
-names(nodesTo) <- c("id", "group")
-
-nodes <- rbind(nodesFrom,nodesTo) %>% unique() 
-nodes$id <- as.character((nodes$id))  
-nodes <- nodes %>% unique() %>% arrange(id)
-visNetwork(nodes, edge)%>%
-  visOptions(highlightNearest = list(enabled = TRUE, degree = 2), nodesIdSelection = TRUE) %>%
-  visEdges(arrows = "to") %>%  
-  visGroups(groupname = "Table",     shape = "icon", icon = list(code = "f114", color = "green",size = 75)) %>%
-  visGroups(groupname = "Attribute", shape = "icon", icon = list(code = "f115", color = "lightgreen", size = 45)) %>%
-  addFontAwesome() 
-# list of icons http://astronautweb.co/snippet/font-awesome/
+  library(visNetwork)
+  # this function creates a data.frame with the name of the data.frame and the names of the columns of that data.frame
+  create_df_of_names = function(df, name){
+    data.frame(from = name, to = names(df))
+  }
+  
+  # create a names list of the data.frames
+  list_of_df <- list(flights = flights,airlines = airlines, airports = airports, weather = weather, planes = planes) 
+  # and map them to build one data.frame with two columns
+  # - from contains all  data.frame names
+  # - to  contains all column names
+  edge <- map2_df(list_of_df,names(list_of_df), create_df_of_names)
+  
+  # create a visNetwork
+  
+  nodesFrom <-  edge %>% cbind(unlist(.$from),"Table") %>% select(3,4) %>% data.frame  
+  nodesTo <-  edge %>% cbind(unlist(.$to),"Attribute") %>% select(3,4) %>% data.frame 
+  
+  names(nodesFrom) <- c("id", "group")
+  names(nodesTo) <- c("id", "group")
+  
+  nodes <- rbind(nodesFrom,nodesTo) %>% unique() 
+  nodes$id <- as.character((nodes$id))  
+  nodes <- nodes %>% unique() %>% arrange(id)
+  visNetwork(nodes, edge)%>%
+    visOptions(highlightNearest = list(enabled = TRUE, degree = 2), nodesIdSelection = TRUE) %>%
+    visEdges(arrows = "to") %>%  
+    visGroups(groupname = "Table",     shape = "icon", icon = list(code = "f114", color = "green",size = 75)) %>%
+    visGroups(groupname = "Attribute", shape = "icon", icon = list(code = "f115", color = "lightgreen", size = 45)) %>%
+    addFontAwesome() 
+  # list of icons http://astronautweb.co/snippet/font-awesome/
 
 ```
 
