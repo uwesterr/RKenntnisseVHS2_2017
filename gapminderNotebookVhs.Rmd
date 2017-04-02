@@ -2,9 +2,14 @@
 title: "Gapminder for VHS 1/2017"
 output:
   html_document:
+    theme: readable
+    highlight: tango
+    css: style.css
     toc: yes
     toc_depth: 4
-  html_notebook: default
+    toc_float: true
+    collapsed: false
+html_notebook: default
 ---
 
 # Finding AIDS impact in r square
@@ -26,22 +31,26 @@ https://www.ted.com/talks/hans_rosling_at_state#t-1176407
 
 library(gapminder)
 library(tidyverse)
-library(plotly)
 tidyverse_packages()
 ```
 
+
 ## Peek into data
-### Plot data
+
  
 ```{r}
 summary(gapminder)
 gapminder %>% filter(gdpPercap < 300)
+
+
+```
+
+### Plot data
+
+```{r}
 # Print xy plot -----------------------------------------------------------
-
-
 gapminder <- gapminder %>% mutate(year1950 = year -1950)
 ggplot(gapminder, aes(x=year, y=lifeExp)) +geom_line(aes(group = country))
-
 ```
 
 ### Data wrangling
@@ -72,7 +81,7 @@ by_country$data[[1]][2]     # show second column
 
 a good explanation can be found at: http://r4ds.had.co.nz/vectors.html#lists 
 
-### structure of dataframe
+### Structure of dataframe
 
 The column **data** is a list of data frames. Therefore, we have now a row per country and all data of that country in a dataframe in **one** column.
 
@@ -101,7 +110,7 @@ models$model[1]
 
 ```
 
-### Combine data wrangling and modell building
+### Combine data wrangling and model building
 
 ```{r}
 
@@ -127,8 +136,8 @@ models <- models %>%
     glance  = map(model, broom::glance),        # Construct a single row summary "glance" of a model
     rsq     = glance %>% map_dbl("r.squared"),  # note the pipe within mutate(...)
     tidy    = map(model, broom::tidy),          # Tidy the result of a test into a summary data.frame
-    augment = map(model, broom::augment)
-  )
+    augment = map(model, broom::augment)        # add columns to the original dataset such as predictions, residuals and cluster assignments
+  ) 
 models
 models$glance[1]
 models$rsq[1]
@@ -176,8 +185,8 @@ models %>%
 # How much did the countries improve life expectancy over time
 
 
-```{r}
-
+```{r, message=FALSE, warning=FALSE}
+library(plotly)
 # Unnest data -------------------------------------------------------------
 
 unnest(models, data)

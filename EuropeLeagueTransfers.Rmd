@@ -5,6 +5,7 @@ date: "July 2016"
 output: 
   html_document: 
     code_folding: hide
+    highlight: tango
     theme: cosmo
     toc: yes
     toc_depth: 4

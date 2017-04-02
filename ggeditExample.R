@@ -3,6 +3,7 @@
 # https://www.r-bloggers.com/ggedit-0-1-1-shiny-module-to-interactvely-edit-ggplots-within-shiny-applications/
 
 library(ggedit)
+library(shinyAce)
 server = function(input, output,session) {
   p1=ggplot(iris,aes(x=Sepal.Length,y=Sepal.Width,colour=Species))+geom_point()
   p2=ggplot(iris,aes(x=Sepal.Length,y=Sepal.Width,colour=Species))+geom_line()+geom_point()

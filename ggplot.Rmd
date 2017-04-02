@@ -2,9 +2,13 @@
 title: "R Kenntnisse VHS 1_2017"
 output:
   html_document:
+    theme: readable
+    highlight: tango
+    css: style.css
     toc: yes
     toc_depth: 4
-  html_notebook: default
+    toc_float: true
+    collapsed: false
 ---
 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
@@ -16,20 +20,21 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 ```{r}
 library(tidyverse)
 tidyverse_packages()  # which packages are in tidyverse
+knitr::opts_chunk$set(cache=TRUE) # renders only changes => faster
 ```
-
-## Where can I find useful packages?
-
-- CRAN "task views"  https://cran.r-project.org
+  
+## Where can I find useful packages?  
+  
+- CRAN "task views"  https://cran.r-project.org  
 - r-bloggers search http://www.r-bloggers.com 
-
-## Where can I find how to use packages
-
+  
+## Where can I find how to use packages  
+  
 - Reference manual on CRAN
 - Vignettes
 - ?
 - Demos
-
+  
 
 ```{r}
 # List vignettes from all *attached* packages
@@ -42,9 +47,9 @@ vignette(package = "ggplot2")
 vignette("ggplot2-specs")
 ```
 
-
-now look for more information on ggplot
-
+  
+now look for more information on ggplot  
+  
 ```{r}
 ?ggplot2
 demo()          # find demos for attached packages
@@ -53,7 +58,7 @@ demo(graphics)  # A show of some of R's graphics capabilities, run in console
 ```
 
 
-## lets look at the some data
+## Analyse data
 
 note that the pipe can be run in parts (short cut Ctrl+Shift+M, CMD+SHIFT+M )
 
@@ -391,16 +396,19 @@ flights
 
 ## filter rows
 
-filter all rows where month == 1 and day ==1, multiple filter conditions are separated by ","
+filter all rows where month == 1 and day == 1, multiple filter conditions are separated by "," and are treated as logical "AND"
 
 ```{r}
 filter(flights, month == 1, day == 1)
+?base::Logic
 ```
 
 
 ## store all x-mas flights
 
-note, if you wrap the expression in () then the result will be displayed even when the result is assigned to a variable
+note, if you wrap the expression in () then the result will be displayed even when the result is assigned to a variable.
+
+The 
 
 ```{r}
 (xmas_flights <- filter(flights, month == 12, day == 24))
