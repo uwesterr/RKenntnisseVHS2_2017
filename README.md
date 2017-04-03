@@ -5,15 +5,15 @@ Esslingen VHS Kurs: "R" Kenntnisse um Wissen aus Daten zu gewinnen Datenvisualis
 
 Der Kurs wird an der VHS Esslingen durchgeführt.
 
--   Linksammlung
+-   **Linksammlung**
 
--   [VHS Esslingen](http://www.vhs-esslingen.de)
+    -   [VHS Esslingen](http://www.vhs-esslingen.de)
 
--   [Im Kurs verwendete Notebook ggplot.md](ggplot.md)
+    -   [Im Kurs verwendete Notebook ggplot.md](ggplot.md)
 
--   [Im Kurs verwendete Notebook gapminderNotebookVhs.md](gapminderNotebookVhs.md)
+    -   [Im Kurs verwendete Notebook gapminderNotebookVhs.md](gapminderNotebookVhs.md)
 
--   [Im Kurs verwendetem Beispiel "The fans stay loyal the players move on"](https://www.kaggle.com/nappon/d/hugomathien/soccer/the-fans-stay-loyal-the-players-move-on)
+    -   [Im Kurs verwendetem Beispiel "The fans stay loyal the players move on"](https://www.kaggle.com/nappon/d/hugomathien/soccer/the-fans-stay-loyal-the-players-move-on)
 
 Datenvisualisierung mit "R"
 ---------------------------
