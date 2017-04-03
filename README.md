@@ -13,7 +13,7 @@ Der Kurs wird an der VHS Esslingen durchgeführt.
 
     -   [Im Kurs verwendete Notebook gapminderNotebookVhs.md](gapminderNotebookVhs.md)
 
-    -   [Im Kurs verwendetem Beispiel "The fans stay loyal the players move on"](https://www.kaggle.com/nappon/d/hugomathien/soccer/the-fans-stay-loyal-the-players-move-on)
+    -   [Im Kurs verwendete Beispiel "The fans stay loyal the players move on"](https://www.kaggle.com/nappon/d/hugomathien/soccer/the-fans-stay-loyal-the-players-move-on)
 
 Datenvisualisierung mit "R"
 ---------------------------
