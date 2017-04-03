@@ -2,8 +2,11 @@
 title: "Gapminder for VHS 1/2017"
 author: "Uwe Sterr"
 date: "April 2017"
+always_allow_html: yes # to allow creation of github doc with HTML elements
 output:
-  html_notebook:
+  github_document:
+    toc: yes
+  html_document:
     collapsed: no
     css: style.css
     highlight: tango
@@ -11,7 +14,7 @@ output:
     toc: yes
     toc_depth: 4
     toc_float: yes
-  html_document:
+  html_notebook:
     collapsed: no
     css: style.css
     highlight: tango
