@@ -5,6 +5,8 @@ Esslingen VHS Kurs: "R" Kenntnisse um Wissen aus Daten zu gewinnen Datenvisualis
 
 Der Kurs wird an der VHS Esslingen durchgeführt. [Zur Webseite der Esslinger VHS hier clicken](http://www.vhs-esslingen.de)
 
+[Beispiel für im Kurs verwendetes Notebook](ggplot.md)
+
 Datenvisualisierung mit "R"
 ---------------------------
 
@@ -14,5 +16,8 @@ Die Programmiersprache "R" war laut KDnuggets in 2015 die meistgenutzte Programm
 -   Interaktive Visualisierung (dygraph)
 -   Erstellung dynamischer Berichte (Markdown, htmlWidgets)
 -   Interaktive Webapplikationen (shiny)
+
+Mindmap vom Kursinhalt
+----------------------
 
 ![alt text](RKenntnisse.png "Mindmap für VHS Kurs")

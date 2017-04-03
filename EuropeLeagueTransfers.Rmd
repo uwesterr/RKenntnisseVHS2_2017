@@ -2,7 +2,10 @@
 title: "The fans stay loyal, the players move on"
 author: "Uwe Sterr"
 date: "July 2016"
+always_allow_html: yes # to allow creation of github doc with HTML elements
 output:
+  github_document:
+    toc: yes
   html_document:
     code_folding: hide
     collapsed: no

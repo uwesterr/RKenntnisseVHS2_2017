@@ -11,6 +11,8 @@ output:
 
 Der Kurs wird an der VHS Esslingen durchgeführt.  [Zur Webseite der Esslinger VHS hier clicken](http://www.vhs-esslingen.de) 
 
+[Beispiel für im Kurs verwendetes Notebook](ggplot.md)
+
 ## Datenvisualisierung mit "R"
 Die Programmiersprache "R" war laut KDnuggets in 2015 die meistgenutzte Programmiersprache im Bereich Data Science. Die rasante Verbreitung der GNU Open License Programmiersprache beruht auf ihrer Stärke im Bereich Statistik und umfangreichen Möglichkeiten Daten graphisch zu analysieren.
 Anhand von Beispielen werden die "R" zugrundeliegende Philosophie im Umgang mit Daten vermittelt. Konzepte zur Erstellung von Interaktiven Reports und Webapplikationen werden vorgestellt und auf Beispiele aus dem Teilnehmerkreis angewendet. "R" Kenntnisse sind nicht vorausgesetzt. Ziel der Weiterbildung ist es den Teilnehmern Wege zur Datenanalyse aufzuzeigen ohne sich in der Syntax zu verlieren. Der Weg könnte die ersten Schritte zum Machine Learning sein...
@@ -21,5 +23,7 @@ Anhand von Beispielen werden die "R" zugrundeliegende Philosophie im Umgang mit 
 - Interaktive Webapplikationen (shiny)
 
 [image1]: RKenntnisse.png "Mindmap für VHS Kurs"
+
+## Mindmap vom Kursinhalt
 
 ![alt text][image1]

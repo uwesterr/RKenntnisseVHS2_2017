@@ -2,9 +2,10 @@
 title: "R Kenntnisse VHS 1_2017"
 author: "Uwe Sterr"
 date: "April 2017"
-always_allow_html: yes
+always_allow_html: yes # to allow creation of github doc with HTML elements
 output:
-  github_document: default
+  github_document:
+    toc: yes
   html_document:
     collapsed: no
     css: style.css
@@ -21,6 +22,7 @@ output:
     toc: yes
     toc_depth: 4
     toc_float: yes
+
 ---
  
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
