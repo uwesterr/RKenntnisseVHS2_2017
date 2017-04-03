@@ -2,6 +2,7 @@
 title: "R Kenntnisse VHS 1_2017"
 author: "Uwe Sterr"
 date: "April 2017"
+always_allow_html: yes
 output:
   github_document: default
   html_document:
