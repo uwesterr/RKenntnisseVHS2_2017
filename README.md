@@ -5,7 +5,7 @@ Esslingen VHS Kurs: "R" Kenntnisse um Wissen aus Daten zu gewinnen Datenvisualis
 
 Der Kurs wird an der VHS Esslingen durchgeführt.
 
--   [Link zur VHS Essling](http://www.vhs-esslingen.de)
+-   [Link zur VHS Esslingen](http://www.vhs-esslingen.de)
 
 -   [Link zum im Kurs verwendetem Notebook ggplot.md](ggplot.md)
 
