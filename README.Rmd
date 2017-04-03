@@ -9,15 +9,17 @@ output:
 ---
 # Esslingen VHS Kurs: "R" Kenntnisse um Wissen aus Daten zu gewinnen Datenvisualisierung mit "R"
 
-Der Kurs wird an der VHS Esslingen durchgeführt.  
+Der Kurs wird an der VHS Esslingen durchgeführt. 
 
-- [Link zur VHS Esslingen](http://www.vhs-esslingen.de) 
+- Linksammlung
 
-- [Link zum im Kurs verwendetem Notebook ggplot.md](ggplot.md)  
+  - [VHS Esslingen](http://www.vhs-esslingen.de) 
 
-- [Link zum im Kurs verwendetem Notebook gapminderNotebookVhs.md](gapminderNotebookVhs.md)
+  - [Im Kurs verwendete Notebook ggplot.md](ggplot.md)  
 
-- [Link zum im Kurs verwendetem Beispiel The fans stay loyal the players move on](https://www.kaggle.com/nappon/d/hugomathien/soccer/the-fans-stay-loyal-the-players-move-on)
+  - [Im Kurs verwendete Notebook gapminderNotebookVhs.md](gapminderNotebookVhs.md)
+
+  - [Im Kurs verwendetem Beispiel "The fans stay loyal the players move on"](https://www.kaggle.com/nappon/d/hugomathien/soccer/the-fans-stay-loyal-the-players-move-on)
 
 
 
