@@ -191,9 +191,6 @@ tableLong <- tableHomeAwayDt %>%
   left_join(Team, by = c("home_team_api_id" = "team_api_id")) %>%
   ungroup() %>%
   select(season, league_name, rank, team_long_name, points)
-
-
-
 ```
 
 ## Create Transfer data.frame
@@ -354,7 +351,7 @@ Other than Spain and Portugal swapping place the same pattern is seen in the in-
 <br><br>
 
 
-## Where did players of the season  `r Saison` play since then?  {.tabset .tabset-fade .tabset-pills}
+## Where did players of the season 2012 play since then?  {.tabset .tabset-fade .tabset-pills}
 
 **Zoom and select nodes to get more insight, navigate with the tabs to the club your are most interested in.**  
 The arrowhead indicates that the player played for that team
@@ -449,7 +446,7 @@ That was intersting, but how much are certain clubs tied together over the years
 ***  
 <br><br>
 
-## Club links with more than 3 transferes between clubs since `r Saison`
+## Club links with more than 3 transferes between clubs since 2012
 **Hover over edges to find the number of transfers betweeen the clubs, hover over the nodes to see the league of the club**
 
 **Incredible**, 10 players went from Fiorentina to Hannover, god, Hannover must be wonderful to life in compared to Florence...
@@ -565,7 +562,7 @@ radialNetwork(TransferRadialList, fontSize = 20, height = 700, width = 1000, lin
 
 <br><br>
 
-# Where did players play since  `r Saison` , this time in a radial network just for fun
+# Where did players play since 2012, this time in a radial network just for fun
 
 
 ## ManU  

@@ -3,6 +3,7 @@ title: "R Kenntnisse VHS 1_2017"
 author: "Uwe Sterr"
 date: "April 2017"
 output:
+  github_document: default
   html_document:
     collapsed: no
     css: style.css
@@ -88,7 +89,7 @@ plot(select(mpg,displ,cty,hwy,year))
 
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot + 
   geom_point(mapping = aes(x = displ, y = hwy))
 ```
 
@@ -96,7 +97,7 @@ ggplot(data = mpg) +
 ### Create a ggplot with color = class
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot +
   geom_point(mapping = aes(x = displ, y = hwy, color = class))
 ```
 
@@ -105,14 +106,14 @@ ggplot(data = mpg) +
 plot the size depending to miles per gallon in the city, lower values and therefore smaller points are better
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot +
   geom_point(mapping = aes(x = displ, y = hwy, size = cty))
 ```
 
 ### Create a ggplot with alpha = class
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot +
   geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
 ```
 
@@ -121,7 +122,7 @@ ggplot(data = mpg) +
 **note** there are only 6 different shapes, therefore "suv" has no shape and is not displayed
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot +
   geom_point(mapping = aes(x = displ, y = hwy, shape = class))
 ```
 
@@ -130,7 +131,7 @@ ggplot(data = mpg) +
 ### Create plot where property of geom is set manually
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot + 
   geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
 ```
 
@@ -147,7 +148,7 @@ If there is a variable value which separates data it can be used to create multi
 facet_wrap wraps a 1d sequence of panels into 2d
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot +
   geom_point(mapping = aes(x = displ, y = hwy)) + 
   facet_wrap(~ class, nrow = 2)
 ```
@@ -157,7 +158,7 @@ ggplot(data = mpg) +
 facet_grid forms a matrix of panels defined by row and column facetting variables.
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot +
   geom_point(mapping = aes(x = displ, y = hwy)) + 
   facet_grid(drv ~ cyl)
 ```
@@ -184,37 +185,30 @@ ggplot(midwest, aes(x= area, y = poptotal, color = percchildbelowpovert)) + geom
 different ways to present the same data
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot + 
   geom_point(mapping = aes(x = displ, y = hwy)) 
 ```
 
 
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot +
   geom_smooth(mapping = aes(x = displ, y = hwy))
 ```
 
 ### geom_smooth with more than one line
 draw a different line, with a different linetype, for each unique value of the variable that you map to linetype
 ```{r}
-ggplot(data = mpg) + 
+mpg %>% ggplot +
   geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv, color = drv))
 ```
 
-### avoid the legend
-
-
-```{r}
-ggplot(data = mpg) +
-  geom_smooth(mapping = aes(x = displ, y = hwy, group = drv))
-```
 
 
 ### display several geoms in same plot
 
 ```{r}
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy)) +
+mpg %>% ggplot +
+  geom_point(mapping =  aes(x = displ, y = hwy)) +
   geom_smooth(mapping = aes(x = displ, y = hwy))
 ```
 
@@ -222,7 +216,7 @@ ggplot(data = mpg) +
 ### don't repeat code 
 
 ```{r}
-ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+mpg %>% ggplot(mapping = aes(x = displ, y = hwy)) + 
   geom_point(mapping = aes(color = class)) + 
   geom_smooth()
 ```
@@ -231,15 +225,15 @@ ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
 ### use only subset of data for geom
 
 ```{r}
-ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+mpg %>% ggplot(mapping = aes(x = displ, y = hwy)) + 
 geom_point(mapping = aes(color = class)) + 
-  geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
+  geom_smooth(data = mpg %>% filter(class == "subcompact"), se = FALSE)
 ```
 
 
 ### bar plot for discrete x-data
 ```{r}
-ggplot(data = diamonds) + 
+diamonds %>% ggplot + 
   geom_bar(mapping = aes(x = cut))
 ```
 
@@ -261,7 +255,7 @@ http://stackoverflow.com
 ## box plot for discrete x- and continuous y-data
 
 ```{r}
-ggplot(data = diamonds) + 
+diamonds %>% ggplot + 
   geom_boxplot(mapping = aes(x = cut, y = price))
 ```
 
@@ -270,7 +264,7 @@ ggplot(data = diamonds) +
 gives good impression of distribution
 
 ```{r}
-ggplot(data = diamonds) + 
+diamonds %>% ggplot +  
   geom_violin(mapping = aes(x = cut, y = price, color = cut))
 ```
 
@@ -279,17 +273,18 @@ A histogram is a graphical representation of the distribution of numerical data.
 
 https://de.wikipedia.org/wiki/Histogramm
 
-$n=\sum _{i=1}^{k}{m_{i}}$
+Definition of each column
+$$n=\sum _{i=1}^{k}{m_{i}}$$
 
 ```{r}
-ggplot(diamonds, aes(carat)) +
+diamonds %>% ggplot(aes(carat)) +
   geom_histogram()
 # set binwidth
-ggplot(diamonds, aes(carat)) +
-  geom_histogram(binwidth = 0.01)
+diamonds %>% ggplot(aes(carat)) +
+  geom_histogram(binwidth = 0.1)
 # set number of bins
-ggplot(diamonds, aes(carat)) +
-  geom_histogram(bins = 200)
+diamonds %>% ggplot(aes(carat)) +
+  geom_histogram(bins = 50)
 ```
 
 ## use geom_freqpoly for easier comparison
@@ -297,9 +292,9 @@ ggplot(diamonds, aes(carat)) +
 ```{r}
 # Rather than stacking histograms, it's easier to compare frequency
 # polygons
-ggplot(diamonds, aes(price, fill = cut)) +
+diamonds %>% ggplot(aes(price, fill = cut)) +
   geom_histogram(binwidth = 500)
-ggplot(diamonds, aes(price, colour = cut)) +
+diamonds %>% ggplot(aes(price, colour = cut)) +
   geom_freqpoly(binwidth = 500)
 ```
 
@@ -314,24 +309,24 @@ ggplot(diamonds, aes(price, ..density.., colour = cut)) +
 ```
 
 ## Empirical Cumulative Distribution Function (ECDF)
+The fraction of  samples  **lower** then a threshold are given by the ECDF
 
 The empirical distribution function estimates the cumulative distribution function underlying of the points in the sample and converges with probability 1.  
-$F_{X}(x)= {P} (X\leq x)$
+$$F_{X}(x)= {P} (X\leq x)$$
 
 https://de.wikipedia.org/wiki/Empirische_Verteilungsfunktion
 
 
 ```{r}
 df <- data.frame(x = rnorm(10000))
-ggplot(df, aes(x)) +
-  geom_histogram()
-ggplot(df, aes(x)) + stat_ecdf(geom = "step")
+df %>% ggplot(aes(x)) + geom_histogram()
+df %>% ggplot(aes(x)) + stat_ecdf(geom = "step")
 
 
 ```
-###  Complementary Cumulative Distribution Function (CCDF)
+The fraction of  samples  **higher** then a threshold are given by the **CCDF**
 
-$\bar{F}(x)={P} (X>x)=1-F(x)$
+$$\bar{F}(x)={P} (X>x)=1-F(x)$$
 ```{r}
 
 p  <- ggplot(df, aes(x)) + stat_ecdf()
@@ -343,12 +338,13 @@ ggplot(pg, aes(x = x, y = 1-y )) + geom_step() + scale_y_log10()
 ## Find correlations
 In statistics relationship between two variables.
 
-$\rho _{X,Y}=\mathrm {corr} (X,Y)={\mathrm {cov} (X,Y) \over \sigma _{X}\sigma _{Y}}={E[(X-\mu _{X})(Y-\mu _{Y})] \over \sigma _{X}\sigma _{Y}}$
+$$\rho _{X,Y}=\mathrm {corr} (X,Y)={\mathrm {cov} (X,Y) \over \sigma _{X}\sigma _{Y}}={E[(X-\mu _{X})(Y-\mu _{Y})] \over \sigma _{X}\sigma _{Y}}$$
 
 ```{r}
 library(corrplot)
-cor_iris <- cor(iris %>% select(-Species))
+cor_iris <- iris %>% select(-Species) %>% cor()
 corrplot.mixed(cor_iris)
+corrplot(cor_iris, method="ellipse")
 
 ```
 
@@ -360,10 +356,9 @@ vignette("corrplot-intro")
 
 ## Maximal Information Coefficient (MIC)
 
-In statistics, the maximal information coefficient (MIC) is a measure of the strength of the linear or **non-linear** association between two variables X and Y.
+In statistics, the maximal information coefficient (MIC) is a measure of the strength of the **linear** or **non-linear** association between two variables X and Y.
 
 ```{r}
-
 library(minerva)
 compare_mic_r = function(x, y){
 cat( "MIC:", mine(x,y)$MIC, ";", "correlation: ", cor(x,y), "\n")  
@@ -422,7 +417,7 @@ flights
 filter all rows where month == 1 and day == 1, multiple filter conditions are separated by "," and are treated as logical "AND"
 
 ```{r}
-filter(flights, month == 1, day == 1)
+flights %>% filter(month == 1, day == 1)
 ?base::Logic
 ```
 
@@ -434,14 +429,14 @@ note, if you wrap the expression in () then the result will be displayed even wh
 The 
 
 ```{r}
-(xmas_flights <- filter(flights, month == 12, day == 24))
+(xmas_flights <- flights %>% filter( month == 12, day == 24))
 ```
 
 
 ## boolean operators work as well
 
 ```{r}
-filter(flights, month == 11 | month == 12)
+flights %>% filter( month == 11 | month == 12)
 ```
 
 
@@ -449,8 +444,8 @@ the following expressions give the same result
 
 
 ```{r}
-filter(flights, !(arr_delay > 120 | dep_delay > 120))
-filter(flights, arr_delay <= 120, dep_delay <= 120)
+mpg %>% filter(cyl > 4, displ >2.8)
+mpg %>% filter(cyl > 4 & displ >2.8)
 ```
 
 
@@ -458,19 +453,19 @@ filter(flights, arr_delay <= 120, dep_delay <= 120)
 
 
 ```{r}
-arrange(flights, year, month, day)
+flights %>% arrange(year, month, day)
 ```
 
 ## select columns with select()
 also an easy way to bring columns in a specific order
 
 ```{r}
-select(flights, year, month, day)
+flights %>% select(year, month, day)
 ```
 select all but a range of columns
 
 ```{r}
-select(flights, -(year:day))
+flights %>% select(-(year:day))
 ```
 
 more can be found in the cheatsheet 
@@ -480,7 +475,7 @@ more can be found in the cheatsheet
 note the %>% operator
 
 ```{r}
-select(flights, 
+flights %>% select(
   year:day, 
   ends_with("delay"), 
   distance, 
@@ -496,7 +491,7 @@ mutate(
 if you only want to keep the new columns use "transmute()"
 
 ```{r}
-select(flights, 
+flights %>% select( 
   year:day, 
   ends_with("delay"), 
   distance, 
@@ -514,19 +509,19 @@ transmute(
 the mean of all depature delays
 
 ```{r}
-summarise(flights, delay = mean(dep_delay, na.rm = TRUE))
+flights %>% summarise(delay = mean(dep_delay, na.rm = TRUE))
 
 # na.rm	a logical value indicating whether NA values should be stripped before the computation proceeds.
 
-summarise(flights, delay = mean(dep_delay, na.rm = TRUE)) %>% as.numeric()
+flights %>% summarise(delay = mean(dep_delay, na.rm = TRUE)) %>% as.numeric()
 
 ```
 
 
 
 ```{r}
-by_day <- group_by(flights, year, month, day)
-summarise(by_day, delay = mean(dep_delay, na.rm = TRUE))
+by_day <- flights %>% group_by(year, month, day)
+by_day %>% summarise(delay = mean(dep_delay, na.rm = TRUE))
 ```
 
 find pattern of delays during the year
