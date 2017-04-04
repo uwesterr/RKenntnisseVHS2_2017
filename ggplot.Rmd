@@ -179,8 +179,11 @@ Use
 to emphasise you message
 
 
+
 ```{r}
-ggplot(midwest, aes(x= area, y = poptotal, color = percchildbelowpovert)) + geom_point() + facet_wrap(~ state, nrow = 3) + scale_y_log10() + scale_x_log10()
+midwest %>% ggplot(aes(x= area, y = poptotal, color = percchildbelowpovert)) + geom_point() + facet_wrap(~ state, nrow = 3) + scale_y_log10() + scale_x_log10()
+
+diamonds
 ```
 
 ## Geometic objects
@@ -347,7 +350,7 @@ library(corrplot)
 cor_iris <- iris %>% select(-Species) %>% cor()
 corrplot.mixed(cor_iris)
 corrplot(cor_iris, method="ellipse")
-
+iris %>% select(-Species) %>% plot()
 ```
 
 further details on the corrplot package can be found in the vignette
@@ -366,6 +369,8 @@ compare_mic_r = function(x, y){
 cat( "MIC:", mine(x,y)$MIC, ";", "correlation: ", cor(x,y), "\n")  
 }
 x <- runif(n=1000, min=0, max=1)
+y <- runif(n=1000, min=0, max=1)
+compare_mic_r(x,y)
 y2 <- 4*(x-0.5)^2; plot(sort(x),y2[order(x)],type="l"); compare_mic_r(x,y2)
 y3 <- sin(6*pi*x*(1+x)); plot(sort(x),y3[order(x)],type="l"); compare_mic_r(x,y3)
 t <- seq(from=0,to=2*pi,length.out=1000)
