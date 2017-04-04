@@ -532,7 +532,7 @@ plotLife <- models %>%
 ggplotly(plotLife, tooltip = c("year1950", "country"))
 ```
 
-preserve06cdb3471e934de6 \#\# where are the exeptions
+preservee8209f4630916821 \#\# where are the exeptions
 
 ``` r
 unnest(models, augment) # using the unnest with one augment argument keeps the grouping variables and augment 

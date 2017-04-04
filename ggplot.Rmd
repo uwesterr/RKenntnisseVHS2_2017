@@ -2,7 +2,6 @@
 title: "R Kenntnisse VHS 1_2017"
 author: "Uwe Sterr"
 date: "April 2017"
-always_allow_html: yes # to allow creation of github doc with HTML elements
 output:
   github_document:
     toc: yes
@@ -22,7 +21,7 @@ output:
     toc: yes
     toc_depth: 4
     toc_float: yes
-
+always_allow_html: yes
 ---
  
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
@@ -509,14 +508,14 @@ transmute(
 
 ## Grouped summaries with summarise()
 
-the mean of all depature delays
+the mean of all departure  delays
 
 ```{r}
-flights %>% summarise(delay = mean(dep_delay, na.rm = TRUE))
+flights %>% summarise(mean_delay = mean(dep_delay, na.rm = TRUE))
 
 # na.rm	a logical value indicating whether NA values should be stripped before the computation proceeds.
 
-flights %>% summarise(delay = mean(dep_delay, na.rm = TRUE)) %>% as.numeric()
+flights %>% summarise(mean_delay = mean(dep_delay, na.rm = TRUE)) %>% as.numeric()
 
 ```
 
@@ -524,14 +523,14 @@ flights %>% summarise(delay = mean(dep_delay, na.rm = TRUE)) %>% as.numeric()
 
 ```{r}
 by_day <- flights %>% group_by(year, month, day)
-by_day %>% summarise(delay = mean(dep_delay, na.rm = TRUE))
+by_day %>% summarise(mean_delay = mean(dep_delay, na.rm = TRUE))
 ```
 
 find pattern of delays during the year
 
 ```{r}
 by_day <- flights %>% group_by(year, month)
-summarise(by_day, delay = mean(dep_delay, na.rm = TRUE)) %>% ggplot(aes( x = month, y = delay, group = month)) +
+summarise(by_day, mean_delay = mean(dep_delay, na.rm = TRUE)) %>% ggplot(aes( x = month, y = mean_delay, group = month)) +
   geom_col()
 ```
 
@@ -546,9 +545,9 @@ not_cancelled <- flights %>%
 not_cancelled %>% 
   group_by(tailnum) %>% 
   summarise(
-    delay = mean(arr_delay)
+    mean_delay = mean(arr_delay)
   ) %>%
-ggplot( mapping = aes(x = delay)) + 
+ggplot( mapping = aes(x = mean_delay)) + 
   geom_freqpoly(binwidth = 10)
 ```
 
@@ -558,22 +557,22 @@ there seems a few planes with very high mean delay. Lets look closer into the is
 delays <- not_cancelled %>% 
   group_by(tailnum) %>% 
   summarise(
-    delay = mean(arr_delay, na.rm = TRUE),
-    n = n()
+    mean_delay = mean(arr_delay, na.rm = TRUE),
+    no_of_flights = n()
   )
 
-ggplot(data = delays, mapping = aes(x = n, y = delay)) + 
+ggplot(data = delays, mapping = aes(x = no_of_flights, y = mean_delay)) + 
   geom_point(alpha = 1/10)
 ```
 
 
-the high delays are for tailnum wiht limited number of flight.
+the high delays are for tailnum with limited number of flight.
 Lets choose only tailnums where at least 25 flights are recorded
 
 ```{r}
 delays %>% 
   filter(n > 25) %>% 
-  ggplot(mapping = aes(x = n, y = delay)) + 
+  ggplot(mapping = aes(x = no_of_flights, y = mean_delay)) + 
     geom_point(alpha = 1/10)
 ```
 
@@ -612,12 +611,12 @@ ggbrush <- function(data, xvar, yvar) {
   runGadget(ui, server)
 }
 # pick_points(mtcars, ~wt, ~mpg)
-brushed_points <- ggbrush(delays, "n", "delay")
+brushed_points <- ggbrush(delays, "no_of_flights", "mean_delay")
 
-brushed_points   %>% ggplot(mapping = aes(x = n, y = delay, color = selected_)) + 
+brushed_points   %>% ggplot(mapping = aes(x = no_of_flights, y = mean_delay, color = selected_)) + 
     geom_point(alpha = 1/10)
 
-brushed_points   %>% filter(selected_ ==TRUE)  %>%  ggplot(mapping = aes(x = n, y = delay, color = selected_)) + 
+brushed_points   %>% filter(selected_ ==TRUE)  %>%  ggplot(mapping = aes(x = no_of_flights, y = mean_delay, color = selected_)) + 
     geom_point(alpha = 1/3)
 
 ```

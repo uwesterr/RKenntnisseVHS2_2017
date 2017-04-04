@@ -1094,52 +1094,52 @@ transmute(
 Grouped summaries with summarise()
 ----------------------------------
 
-the mean of all depature delays
+the mean of all departure delays
 
 ``` r
-flights %>% summarise(delay = mean(dep_delay, na.rm = TRUE))
+flights %>% summarise(mean_delay = mean(dep_delay, na.rm = TRUE))
 ```
 
     ## # A tibble: 1 × 1
-    ##      delay
-    ##      <dbl>
-    ## 1 12.63907
+    ##   mean_delay
+    ##        <dbl>
+    ## 1   12.63907
 
 ``` r
 # na.rm a logical value indicating whether NA values should be stripped before the computation proceeds.
 
-flights %>% summarise(delay = mean(dep_delay, na.rm = TRUE)) %>% as.numeric()
+flights %>% summarise(mean_delay = mean(dep_delay, na.rm = TRUE)) %>% as.numeric()
 ```
 
     ## [1] 12.63907
 
 ``` r
 by_day <- flights %>% group_by(year, month, day)
-by_day %>% summarise(delay = mean(dep_delay, na.rm = TRUE))
+by_day %>% summarise(mean_delay = mean(dep_delay, na.rm = TRUE))
 ```
 
     ## Source: local data frame [365 x 4]
     ## Groups: year, month [?]
     ## 
-    ##     year month   day     delay
-    ##    <int> <int> <int>     <dbl>
-    ## 1   2013     1     1 11.548926
-    ## 2   2013     1     2 13.858824
-    ## 3   2013     1     3 10.987832
-    ## 4   2013     1     4  8.951595
-    ## 5   2013     1     5  5.732218
-    ## 6   2013     1     6  7.148014
-    ## 7   2013     1     7  5.417204
-    ## 8   2013     1     8  2.553073
-    ## 9   2013     1     9  2.276477
-    ## 10  2013     1    10  2.844995
+    ##     year month   day mean_delay
+    ##    <int> <int> <int>      <dbl>
+    ## 1   2013     1     1  11.548926
+    ## 2   2013     1     2  13.858824
+    ## 3   2013     1     3  10.987832
+    ## 4   2013     1     4   8.951595
+    ## 5   2013     1     5   5.732218
+    ## 6   2013     1     6   7.148014
+    ## 7   2013     1     7   5.417204
+    ## 8   2013     1     8   2.553073
+    ## 9   2013     1     9   2.276477
+    ## 10  2013     1    10   2.844995
     ## # ... with 355 more rows
 
 find pattern of delays during the year
 
 ``` r
 by_day <- flights %>% group_by(year, month)
-summarise(by_day, delay = mean(dep_delay, na.rm = TRUE)) %>% ggplot(aes( x = month, y = delay, group = month)) +
+summarise(by_day, mean_delay = mean(dep_delay, na.rm = TRUE)) %>% ggplot(aes( x = month, y = mean_delay, group = month)) +
   geom_col()
 ```
 
@@ -1155,9 +1155,9 @@ not_cancelled <- flights %>%
 not_cancelled %>% 
   group_by(tailnum) %>% 
   summarise(
-    delay = mean(arr_delay)
+    mean_delay = mean(arr_delay)
   ) %>%
-ggplot( mapping = aes(x = delay)) + 
+ggplot( mapping = aes(x = mean_delay)) + 
   geom_freqpoly(binwidth = 10)
 ```
 
@@ -1169,22 +1169,22 @@ there seems a few planes with very high mean delay. Lets look closer into the is
 delays <- not_cancelled %>% 
   group_by(tailnum) %>% 
   summarise(
-    delay = mean(arr_delay, na.rm = TRUE),
-    n = n()
+    mean_delay = mean(arr_delay, na.rm = TRUE),
+    no_of_flights = n()
   )
 
-ggplot(data = delays, mapping = aes(x = n, y = delay)) + 
+ggplot(data = delays, mapping = aes(x = no_of_flights, y = mean_delay)) + 
   geom_point(alpha = 1/10)
 ```
 
 ![](ggplot_files/figure-markdown_github/unnamed-chunk-45-1.png)
 
-the high delays are for tailnum wiht limited number of flight. Lets choose only tailnums where at least 25 flights are recorded
+the high delays are for tailnum with limited number of flight. Lets choose only tailnums where at least 25 flights are recorded
 
 ``` r
 delays %>% 
   filter(n > 25) %>% 
-  ggplot(mapping = aes(x = n, y = delay)) + 
+  ggplot(mapping = aes(x = no_of_flights, y = mean_delay)) + 
     geom_point(alpha = 1/10)
 ```
 
@@ -1225,21 +1225,21 @@ ggbrush <- function(data, xvar, yvar) {
   runGadget(ui, server)
 }
 # pick_points(mtcars, ~wt, ~mpg)
-brushed_points <- ggbrush(delays, "n", "delay")
+brushed_points <- ggbrush(delays, "no_of_flights", "mean_delay")
 ```
 
     ## 
-    ## Listening on http://127.0.0.1:4708
+    ## Listening on http://127.0.0.1:5311
 
 ``` r
-brushed_points   %>% ggplot(mapping = aes(x = n, y = delay, color = selected_)) + 
+brushed_points   %>% ggplot(mapping = aes(x = no_of_flights, y = mean_delay, color = selected_)) + 
     geom_point(alpha = 1/10)
 ```
 
 ![](ggplot_files/figure-markdown_github/unnamed-chunk-47-1.png)
 
 ``` r
-brushed_points   %>% filter(selected_ ==TRUE)  %>%  ggplot(mapping = aes(x = n, y = delay, color = selected_)) + 
+brushed_points   %>% filter(selected_ ==TRUE)  %>%  ggplot(mapping = aes(x = no_of_flights, y = mean_delay, color = selected_)) + 
     geom_point(alpha = 1/3)
 ```
 
