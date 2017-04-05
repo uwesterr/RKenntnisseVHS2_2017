@@ -1,0 +1,142 @@
+---
+title: "Read Json"
+output:
+  html_notebook: default
+  html_document: default
+---
+
+# Read in json files
+
+Andreas würde gerne folgende json daten einlese
+Luftdaten Info
+Feinstaubsensoren OK Lab
+http://api.luftdaten.info/static/v1/data.json
+
+according to hadley use jsonlite to read in json data
+
+```{r}
+library(jsonlite)
+library(tidyverse)
+library(rvest)
+
+```
+
+use rvest from hadley to web scrap data
+
+```{r}
+library(rvest)
+Sensorenwerte <- read_html("http://api.luftdaten.info/static/v1/data.json")
+class(Sensorenwerte)
+
+```
+hmm, got an xml doc, not  what i was looking for...
+
+according to hadley use jsonlite to read in json data from file or the web
+
+```{r}
+Sensorenwerte <- fromJSON("http://api.luftdaten.info/static/v1/data.json", simplifyDataFrame = TRUE, flatten = TRUE)
+class(Sensorenwerte)
+```
+
+got a data.frame, that is promissing   
+lets see what is inside
+
+```{r}
+names(Sensorenwerte)
+str(Sensorenwerte)
+```
+
+the file is somewhat nested, so unnest it
+
+```{r unnest_sensor_data}
+Sensorenwerte %>% unnest(.sep = "_") -> Sensorwerte_unnest
+Sensorwerte_unnest %>% select(timestamp)
+str(Sensorwerte_unnest)
+```
+
+set date format for time stamp
+
+```{r}
+library(lubridate)
+Sensorwerte_unnest %>% mutate(timestamp = as.Date(timestamp)) -> Sensorwerte_unnest
+str(Sensorwerte_unnest)
+```
+
+- sensordatavalues_value
+- location.longitude
+- location.latitude
+
+have charater class instead of numeric
+
+```{r}
+Sensorwerte_unnest %>% mutate(sensordatavalues_value = as.numeric(sensordatavalues_value), location.longitude = as.numeric(location.longitude), location.latitude = as.numeric(location.latitude) ) -> Sensorwerte_numeric
+  str(Sensorwerte_numeric)
+```
+
+
+now we have the right data format, lets do some plots
+
+```{r}
+Sensorwerte_numeric %>% ggplot + geom_point(aes(timestamp, sensordatavalues_value, color = sensor.sensor_type.id))
+```
+
+
+create list of sensor ids and how often they occur 
+
+```{r}
+Sensorwerte_numeric %>% count(sensor.id) %>% arrange(desc(n))
+```
+
+```{r}
+Sensorwerte_numeric %>% count(location.id)  %>% arrange(desc(n))
+```
+
+
+seems like there are more sensors on a given loction
+
+```{r}
+Sensorwerte_numeric %>% group_by(location.id, sensor.id) %>% summarise(n = n())-> Sensor_grouped
+```
+
+
+lets create a map with the sensors location  
+leaflet did not work in the beginning, adding "  html_document: default" in yaml header helped
+
+map shows in editor and preview but at times not in browser  
+
+install devtools::install_github("rstudio/leaflet")
+
+```{r}
+
+Sensorwerte_numeric %>% distinct(location.longitude,location.latitude) -> Sensors_distinct_location
+
+library(leaflet)
+
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=Sensors_distinct_location$location.longitude, lat= Sensors_distinct_location$location.latitude, popup="Feinstaubsensor")
+m  # Print the map
+```
+
+
+
+ggmap seems the solution but get an error 
+Error: GeomRasterAnn was built with an incompatible version of ggproto. Please reinstall the package that provides this extension.
+Console~/CloudProjectsUnderWork/ProjectsUnderWork/VhsDataVisualization/Rkenntnisse_2_2017/
+			
+
+then install devtools::install_github("dkahle/ggmap") based on http://stackoverflow.com/questions/40642850/ggmap-error-geomrasterann-was-built-with-an-incompatible-version-of-ggproto
+
+solved the issue but then leaflet worked and is interactive and nicer...
+```{r}
+library(ggmap)
+
+map <- get_map(location = 'Germany', zoom = 7)
+ggmap(map) 
+```
+
+
+
+
+
+
