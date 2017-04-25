@@ -118,7 +118,8 @@ models <- by_country %>%
   )
 models
 lm(lifeExp  ~  year1950, data=by_country$data[[1]]) 
-models$model[1]
+# the very same thing as 
+models$model[[1]]
 
 ```
 
@@ -181,6 +182,17 @@ models %>%
   geom_point(aes(colour = continent)) 
 
 ```
+
+## and reduce number of countries displayed
+```{r}
+
+models %>% top_n(-10, rsq) %>% 
+  ggplot(aes(rsq, reorder(country, rsq))) +
+  geom_point(aes(colour = continent)) 
+
+```
+
+
 
 ### Find the countries with the worst fit
 

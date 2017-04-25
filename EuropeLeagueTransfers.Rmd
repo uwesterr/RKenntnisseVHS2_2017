@@ -51,6 +51,9 @@ library(maps)
 library(ggmap)
 library(circlize)
 
+```
+
+```{r}
 rm(list = ls())
 Saison <-2012
 
@@ -68,9 +71,8 @@ rsplit <- function(x) {
 
 # Connect to data base ----------------------------------------------------
 con <- dbConnect(SQLite(), dbname="input/database.sqlite")
-# con <- dbConnect(SQLite(), dbname="database160721.sqlite")
 # list all tables
-# dbListTables(con)
+ dbListTables(con)
 
 player       <- tbl_df(dbGetQuery(con,"SELECT * FROM player"))
 # player_stats <- tbl_df(dbGetQuery(con,"SELECT * FROM player_stats"))
@@ -78,6 +80,7 @@ Match        <- tbl_df(dbGetQuery(con,"SELECT * FROM Match"))
 Team        <- tbl_df(dbGetQuery(con,"SELECT * FROM Team"))
 Country        <- tbl_df(dbGetQuery(con,"SELECT * FROM Country"))
 League        <- tbl_df(dbGetQuery(con,"SELECT * FROM League"))
+
 
 ```
 

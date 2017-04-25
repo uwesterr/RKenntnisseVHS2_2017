@@ -34,7 +34,7 @@ hmm, got an xml doc, not  what i was looking for...
 according to hadley use jsonlite to read in json data from file or the web
 
 ```{r}
-Sensorenwerte <- fromJSON("http://api.luftdaten.info/static/v1/data.json", simplifyDataFrame = TRUE, flatten = TRUE)
+Sensorenwerte <- fromJSON("http://api.luftdaten.info/static/v1/data.json", flatten = TRUE)
 class(Sensorenwerte)
 ```
 
