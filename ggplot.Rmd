@@ -437,6 +437,8 @@ The
 
 ```{r}
 (xmas_flights <- flights %>% filter( month == 12, day == 24))
+ flights %>% filter( month == 12, day == 24) -> xmaxs_flights
+
 ```
 
 
@@ -534,8 +536,8 @@ by_day %>% summarise(mean_delay = mean(dep_delay, na.rm = TRUE))
 find pattern of delays during the year
 
 ```{r}
-by_day <- flights %>% group_by(year, month)
-summarise(by_day, mean_delay = mean(dep_delay, na.rm = TRUE)) %>% ggplot(aes( x = month, y = mean_delay, group = month)) +
+by_month <- flights %>% group_by(year, month)
+by_month %>% summarise( mean_delay = mean(dep_delay, na.rm = TRUE)) %>% ggplot(aes( x = month, y = mean_delay, group = month)) +
   geom_col()
 ```
 
@@ -576,7 +578,7 @@ Lets choose only tailnums where at least 25 flights are recorded
 
 ```{r}
 delays %>% 
-  filter(n > 25) %>% 
+  filter(no_of_flights > 35) %>% 
   ggplot(mapping = aes(x = no_of_flights, y = mean_delay)) + 
     geom_point(alpha = 1/10)
 ```
@@ -623,6 +625,19 @@ brushed_points   %>% ggplot(mapping = aes(x = no_of_flights, y = mean_delay, col
 
 brushed_points   %>% filter(selected_ ==TRUE)  %>%  ggplot(mapping = aes(x = no_of_flights, y = mean_delay, color = selected_)) + 
     geom_point(alpha = 1/3)
+
+```
+
+## which plane gains most
+
+```{r}
+flights %>% mutate(gain = dep_delay- arr_delay) %>% group_by(tailnum) %>%   summarise( mean_delay = mean(gain, na.rm = TRUE), no_flights =n(), mean_air_time = mean(air_time)) %>% filter(no_flights >10) %>% arrange(-mean_delay) -> mean_flights
+
+mean_flights %>% filter(no_flights <1000) %>%   ggplot() + geom_point(aes(x = mean_delay, y = no_flights, alpha = 1/3, color = mean_air_time))
+
+mean_flights %>% filter(no_flights <1000) %>%   ggplot() + geom_histogram(aes(x = mean_delay)) -> p
+ggplotly(p)
+
 
 ```
 
